@@ -5,7 +5,7 @@ using UnityEngine.Experimental.VFX;
 using UnityEngine.VFX.Utils;
 
 [VFXBinder("Terrain/Terrain")]
-public class TerrainBinder : VFXBinderBase
+public class VFXTerrainBinder : VFXBinderBase
 {
     [VFXParameterBinding("UnityEditor.VFX.VFXTerrainType")]
     public ExposedParameter TerrainParameter;
