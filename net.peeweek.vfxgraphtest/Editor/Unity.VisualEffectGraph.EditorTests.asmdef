@@ -2,8 +2,12 @@
     "name": "Unity.VisualEffectGraph.EditorTests",
     "references": [
         "Unity.VisualEffectGraph.Editor",
-        "Unity.VisualEffectGraph.Runtime"
+        "Unity.VisualEffectGraph.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Core.Editor",
+        "Unity.VisualEffectGraph.RuntimeTests"
     ],
+    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],

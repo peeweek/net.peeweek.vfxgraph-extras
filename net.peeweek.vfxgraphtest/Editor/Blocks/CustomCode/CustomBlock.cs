@@ -8,35 +8,52 @@ namespace UnityEditor.VFX.Block
     [VFXInfo(category = "Custom")]
     class CustomBlock : VFXBlock
     {
-        [SerializeField, VFXSetting]
-        protected CustomBlockFunction CustomBlockFunction;
 
-        public override string name { get { return CustomBlockFunction == null ? "Empty Custom Node" : CustomBlockFunction.BlockName + " (Custom)"; } }
+        [Serializable]
+        public struct AttributeDeclarationInfo
+        {
+            public string name;
+            public VFXAttributeMode mode;
+        }
 
-        public override VFXContextType compatibleContexts { get { return CustomBlockFunction == null ? VFXContextType.kAll : CustomBlockFunction.ContextType; } }
+        [Serializable]
+        public struct PropertyDeclarationInfo
+        {
+            public string name;
+            public string type;
+        }
+        
+        public string BlockName = "Custom Block";
+
+        public VFXContextType ContextType = VFXContextType.kInitAndUpdateAndOutput;
+        public VFXDataType CompatibleData = VFXDataType.kParticle;
+
+        public List<AttributeDeclarationInfo> Attributes = new List<AttributeDeclarationInfo>();
+        public List<PropertyDeclarationInfo> Properties = new List<PropertyDeclarationInfo>();
+
+        public bool UseTotalTime = false;
+        public bool UseDeltaTime = false;
+        public bool UseRandom = false;
+
+        [Multiline]
+        public string SourceCode = "";
+
+
+        public override string name { get { return BlockName + " (Custom)"; } }
+
+        public override VFXContextType compatibleContexts { get { return ContextType; } }
 
         public override VFXDataType compatibleData { get { return VFXDataType.kParticle; } }
-
-        public override void OnEnable()
-        {
-            base.OnEnable();
-
-            if ((compatibleContexts & (m_Parent as VFXContext).contextType) == 0)
-                Debug.LogWarning(string.Format("Custom Block {0} present in invalid Context ({1})", name, (m_Parent as VFXContext).contextType));
-        }
 
         public override IEnumerable<VFXAttributeInfo> attributes
         {
             get
             {
-                if (CustomBlockFunction != null)
-                {
-                    foreach (var info in CustomBlockFunction.Attributes)
-                        yield return new VFXAttributeInfo(VFXAttribute.Find(info.name), info.mode);
+                foreach (var info in Attributes)
+                    yield return new VFXAttributeInfo(VFXAttribute.Find(info.name), info.mode);
 
-                    if (CustomBlockFunction.UseRandom)
-                        yield return new VFXAttributeInfo(VFXAttribute.Seed, VFXAttributeMode.ReadWrite);
-                }
+                if (UseRandom)
+                    yield return new VFXAttributeInfo(VFXAttribute.Seed, VFXAttributeMode.ReadWrite);
             }
         }
 
@@ -44,12 +61,8 @@ namespace UnityEditor.VFX.Block
         {
             get
             {
-                if (CustomBlockFunction != null)
-                {
-                    foreach (var info in CustomBlockFunction.Properties)
-                        yield return new VFXPropertyWithValue(new VFXProperty(knownTypes[info.type], info.name));
-                }
-
+                foreach (var info in Properties)
+                    yield return new VFXPropertyWithValue(new VFXProperty(knownTypes[info.type], info.name));
             }
         }
 
@@ -60,14 +73,11 @@ namespace UnityEditor.VFX.Block
                 foreach (var param in base.parameters)
                     yield return param;
 
-                if(CustomBlockFunction != null)
-                {
-                    if (CustomBlockFunction.UseDeltaTime)
-                        yield return new VFXNamedExpression(VFXBuiltInExpression.DeltaTime, "deltaTime");
+                if (UseDeltaTime)
+                    yield return new VFXNamedExpression(VFXBuiltInExpression.DeltaTime, "deltaTime");
 
-                    if (CustomBlockFunction.UseTotalTime)
-                        yield return new VFXNamedExpression(VFXBuiltInExpression.TotalTime, "totalTime");
-                }
+                if (UseTotalTime)
+                    yield return new VFXNamedExpression(VFXBuiltInExpression.TotalTime, "totalTime");
             }
         }
 
@@ -75,24 +85,8 @@ namespace UnityEditor.VFX.Block
         {
             get
             {
-                if (CustomBlockFunction == null)
-                {
-                    return "";
-                }
-                else
-                {
-                    return CustomBlockFunction.SourceCode;
-                }
-
+                return SourceCode;
             }
-        }
-
-        public override int GetHashCode()
-        {
-            if (CustomBlockFunction == null)
-                return 12345;
-            else 
-                return CustomBlockFunction.GetHashCode();
         }
 
         public static Dictionary<string, Type> knownTypes = new Dictionary<string, Type>()
