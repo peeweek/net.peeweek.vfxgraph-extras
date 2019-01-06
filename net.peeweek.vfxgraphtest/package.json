@@ -1,7 +1,7 @@
 {
-    "name": "net.peeweek.vfxgraphtest",
-    "displayName": "Visual Effect Graph Tests",
+    "name": "net.peeweek.vfxgraph-extras",
+    "displayName": "Visual Effect Graph (Extras)",
     "version": "0.0.1",
     "unity": "2018.3",
-    "description": "Visual Effect Graph Tests"
+    "description": "Visual Effect Graph (Extras)"
 }
