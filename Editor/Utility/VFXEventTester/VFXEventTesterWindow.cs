@@ -24,12 +24,20 @@ namespace UnityEditor.VFX.Utils
             m_Attributes = new List<EventAttribute>();
 
             Visible = EditorPrefs.GetBool(PreferenceName, false);
-            Menu.SetChecked("Edit/Visual Effects/Show Event Tester", Visible);
 
             list = new ReorderableList(m_Attributes, typeof(EventAttribute), true, true, true, true);
             list.drawHeaderCallback = drawHeader;
             list.drawElementCallback = drawItem;
             list.onAddDropdownCallback = drawAddDropDown;
+        }
+
+        [MenuItem("Edit/Visual Effects/Show Event Tester", false, 2350)]
+        static void ToggleVisibility()
+        {
+            Visible = !Visible;
+            EditorPrefs.SetBool(PreferenceName, Visible);
+
+            UpdateVisibility();
         }
 
         [InitializeOnLoadMethod]
@@ -39,6 +47,8 @@ namespace UnityEditor.VFX.Utils
                 SceneView.onSceneGUIDelegate += DrawWindow;
             else
                 SceneView.onSceneGUIDelegate -= DrawWindow;
+
+            Menu.SetChecked("Edit/Visual Effects/Show Event Tester", Visible);
         }
 
         private static void drawAddDropDown(Rect buttonRect, ReorderableList list)
@@ -103,15 +113,7 @@ namespace UnityEditor.VFX.Utils
             m_Attributes.Add(new EventAttribute(name as string, EventAttributeType.Color, Color.white));
         }
 
-        [MenuItem("Edit/Visual Effects/Show Event Tester", false, 2350)]
-        static void ToggleVisibility()
-        {
-            Visible = !Visible;
-            Menu.SetChecked("Edit/Visual Effects/Show Event Tester", Visible);
-            EditorPrefs.SetBool(PreferenceName, Visible);
 
-            UpdateVisibility();
-        }
 
         static void DrawWindow(SceneView sceneView)
         {
