@@ -31,7 +31,7 @@ namespace UnityEditor.VFX.Utils
             list.onAddDropdownCallback = drawAddDropDown;
         }
 
-        [MenuItem("Edit/Visual Effects/Show Event Tester", false, 2350)]
+        [MenuItem("Edit/Visual Effects/Show Event Tester", validate = false, priority = 320)]
         static void ToggleVisibility()
         {
             Visible = !Visible;
@@ -39,6 +39,15 @@ namespace UnityEditor.VFX.Utils
 
             UpdateVisibility();
         }
+
+        [MenuItem("Edit/Visual Effects/Show Event Tester", validate = true, priority = 320)]
+        static bool CheckToggleVisibility()
+        {
+            Visible = EditorPrefs.GetBool(PreferenceName, Visible);
+            Menu.SetChecked("Edit/Visual Effects/Show Event Tester", Visible);
+            return true;
+        }
+
 
         [InitializeOnLoadMethod]
         static void UpdateVisibility()
@@ -48,7 +57,7 @@ namespace UnityEditor.VFX.Utils
             else
                 SceneView.onSceneGUIDelegate -= DrawWindow;
 
-            Menu.SetChecked("Edit/Visual Effects/Show Event Tester", Visible);
+
         }
 
         private static void drawAddDropDown(Rect buttonRect, ReorderableList list)
