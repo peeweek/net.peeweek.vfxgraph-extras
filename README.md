@@ -59,6 +59,6 @@ You can use a manual, local package installation if you need to alter the code l
 
 * Make sure your project is correctly configured with both HDRP and VFX Graph at correct revisions 
 * With unity closed, edit the `Packages/manifest.json` with a text editor
-* append the line `    "net.peeweek.vfxgraph-extras": "https://github.com/peeweek/net.peeweek.vfxgraph-extras.git",` under `dependencies`
+* append the line `    "net.peeweek.vfxgraph-extras": "https://github.com/IxxyXR/net.peeweek.vfxgraph-extras.git",` under `dependencies`
 
 
