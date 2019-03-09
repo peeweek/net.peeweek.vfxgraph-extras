@@ -1,6 +1,6 @@
 {
-    "name": "net.peeweek.vfxgraph-extras",
-    "displayName": "Visual Effect Graph (Extras)",
+    "name": "net.ixxy.vfxgraph-extras",
+    "displayName": "Ixxy Visual Effect Graph (Extras)",
     "version": "0.0.1",
     "unity": "2018.3",
     "description": "Visual Effect Graph (Extras)"
