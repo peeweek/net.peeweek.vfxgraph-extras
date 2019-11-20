@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace UnityEditor.VFX.Block
 {
@@ -19,14 +18,16 @@ namespace UnityEditor.VFX.Block
         [Serializable]
         public struct PropertyDeclarationInfo
         {
+            [Delayed]
             public string name;
             public string type;
         }
         
+        [Delayed]
         public string BlockName = "Custom Block";
 
-        public VFXContextType ContextType = VFXContextType.kInitAndUpdateAndOutput;
-        public VFXDataType CompatibleData = VFXDataType.kParticle;
+        public VFXContextType ContextType = VFXContextType.InitAndUpdateAndOutput;
+        public VFXDataType CompatibleData = VFXDataType.Particle;
 
         public List<AttributeDeclarationInfo> Attributes = new List<AttributeDeclarationInfo>();
         public List<PropertyDeclarationInfo> Properties = new List<PropertyDeclarationInfo>();
@@ -43,7 +44,7 @@ namespace UnityEditor.VFX.Block
 
         public override VFXContextType compatibleContexts { get { return ContextType; } }
 
-        public override VFXDataType compatibleData { get { return VFXDataType.kParticle; } }
+        public override VFXDataType compatibleData { get { return VFXDataType.Particle; } }
 
         public override IEnumerable<VFXAttributeInfo> attributes
         {

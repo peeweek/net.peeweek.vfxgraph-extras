@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditorInternal;
@@ -23,13 +23,10 @@ namespace UnityEditor.VFX.Block
         ReorderableList attributeList;
         ReorderableList propertiesList;
 
-
         bool dirty;
 
         private void OnEnable()
         {
-            Reload();
-            
             BlockName = serializedObject.FindProperty("BlockName");
             ContextType = serializedObject.FindProperty("ContextType");
             CompatibleData = serializedObject.FindProperty("CompatibleData");
@@ -39,7 +36,7 @@ namespace UnityEditor.VFX.Block
             UseDeltaTime = serializedObject.FindProperty("UseDeltaTime");
             UseRandom = serializedObject.FindProperty("UseRandom");
             SourceCode = serializedObject.FindProperty("SourceCode");
-
+            source = SourceCode.stringValue;
             dirty = false;
             serializedObject.Update();
 
@@ -73,6 +70,7 @@ namespace UnityEditor.VFX.Block
             dirty = true;
             Apply();
         }
+
         void OnRemoveAttribute(ReorderableList list)
         {
             if (list.index != -1)
@@ -102,11 +100,18 @@ namespace UnityEditor.VFX.Block
             var modeRect = rect;
             modeRect.xMin = split;
             var mode = sp.FindPropertyRelative("mode");
-            var value = EditorGUI.EnumFlagsField(modeRect, (VFXAttributeMode)mode.intValue);
-            mode.intValue = (int)System.Convert.ChangeType(value, typeof(VFXAttributeMode));
+            var value = EditorGUI.EnumPopup(modeRect, (AttributeMode)mode.intValue);
+            mode.intValue = (int)System.Convert.ChangeType(value, typeof(AttributeMode));
 
             if(GUI.changed)
                 Apply();
+        }
+
+        enum AttributeMode
+        {
+            Read = 1,
+            Write = 2,
+            ReadWrite = 3,
         }
 
         void OnAddProperty(ReorderableList list)
@@ -144,7 +149,7 @@ namespace UnityEditor.VFX.Block
 
             nameRect.width = split - 40;
             string name = sp.FindPropertyRelative("name").stringValue;
-            sp.FindPropertyRelative("name").stringValue = EditorGUI.TextField(nameRect, name);
+            sp.FindPropertyRelative("name").stringValue = EditorGUI.DelayedTextField(nameRect, name);
 
             var modeRect = rect;
             modeRect.xMin = split;
@@ -158,19 +163,37 @@ namespace UnityEditor.VFX.Block
                 Apply();
         }
 
+        string source;
+
         public override void OnInspectorGUI()
         {
+            serializedObject.Update();
 
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(BlockName);
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Configuration", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(ContextType);
             EditorGUILayout.PropertyField(CompatibleData);
             attributeList.DoLayoutList();
-            propertiesList.DoLayoutList();
+            propertiesList.DoLayoutList(); 
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Options", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(UseTotalTime);
             EditorGUILayout.PropertyField(UseDeltaTime);
             EditorGUILayout.PropertyField(UseRandom);
-            EditorGUILayout.PropertyField(SourceCode);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                Apply();
+            }
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Source Code", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            source = EditorGUILayout.TextArea(source, Styles.codeEditor, GUILayout.MinHeight(64));
 
             if (EditorGUI.EndChangeCheck())
                 dirty = true;
@@ -179,10 +202,21 @@ namespace UnityEditor.VFX.Block
             {
                 if (GUILayout.Button("Apply"))
                 {
+                    SourceCode.stringValue = source;
                     Apply();
                 }
-
             }
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Syntax Cheat Sheet", EditorStyles.boldLabel);
+            GUILayout.Label(
+@"deltaTime : Delta Time
+totalTime : Total Time
+RAND : Random Float
+RAND3 : Random Vector
+
+SampleGradient(GradientProperty, t)
+SampleCurve(CurveProperty, t)", Styles.helpBox);
+
 
         }
 
@@ -194,13 +228,31 @@ namespace UnityEditor.VFX.Block
             Reload();
         }
 
-
         void Reload()
         {
-            (serializedObject.targetObject as VFXBlock).Invalidate(VFXModel.InvalidationCause.kSettingChanged);
+            var block = (serializedObject.targetObject as VFXBlock);
+            block.Invalidate(VFXModel.InvalidationCause.kSettingChanged);
+            block.ResyncSlots(true);
         }
 
-    }
+        static class Styles
+        {
+            public static GUIStyle codeEditor;
+            public static GUIStyle helpBox;
+            static Styles()
+            {
 
+                codeEditor = new GUIStyle(EditorStyles.textArea);
+                Font font = AssetDatabase.LoadAssetAtPath<Font>("Packages/net.peeweek.vfxgraph-extras/Fonts/Inconsolata-Regular.otf");
+                codeEditor.font = font;
+                codeEditor.padding = new RectOffset(16,4,4,4);
+
+                helpBox = new GUIStyle(EditorStyles.helpBox);
+                helpBox.font = font;
+                helpBox.richText = true;
+                helpBox.fontSize = 12;
+            }
+        } 
+    }
 }
 
