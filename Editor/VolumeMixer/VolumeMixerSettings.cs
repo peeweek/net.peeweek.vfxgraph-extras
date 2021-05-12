@@ -29,23 +29,26 @@ namespace VolumeMixerUtility.Editor
 
             void EditFloatString(Rect rect, int index, bool isActive, bool isFocused)
             {
-                EditorGUI.BeginDisabled(index >= floatPropertyCount);
-                floatPropertyNames[index] = EditorGUI.DelayedTextField(rect, floatPropertyNames[index]);
-                EditorGUI.EndDisabled();
+                using(new EditorGUI.DisabledGroupScope(index >= floatPropertyCount))
+                {
+                    floatPropertyNames[index] = EditorGUI.DelayedTextField(rect, floatPropertyNames[index]);
+                }
             }
 
             void EditVectorString(Rect rect, int index, bool isActive, bool isFocused)
             {
-                EditorGUI.BeginDisabled(index >= vectorPropertyCount);
-                vectorPropertyNames[index] = EditorGUI.DelayedTextField(rect, vectorPropertyNames[index]);
-                EditorGUI.EndDisabled();
+                using(new EditorGUI.DisabledGroupScope(index >= vectorPropertyCount))
+                {
+                    vectorPropertyNames[index] = EditorGUI.DelayedTextField(rect, vectorPropertyNames[index]);
+                }
             }
 
             void EditColorString(Rect rect, int index, bool isActive, bool isFocused)
             {
-                EditorGUI.BeginDisabled(index >= colorPropertyCount);
-                colorPropertyNames[index] = EditorGUI.DelayedTextField(rect, colorPropertyNames[index]);
-                EditorGUI.EndDisabled();
+                using(new EditorGUI.DisabledGroupScope(index >= colorPropertyCount))
+                {
+                    colorPropertyNames[index] = EditorGUI.DelayedTextField(rect, colorPropertyNames[index]);
+                }
             }
 
             return new SettingsProvider("Project/Volume Mixer", SettingsScope.Project)

@@ -1,7 +1,7 @@
 {
-    "name": "net.peeweek.vfxgraph-extras",
-    "displayName": "Visual Effect Graph (Extras)",
-    "version": "2019.3.0",
-    "unity": "2019.3",
-    "description": "Visual Effect Graph (Extras)"
+  "name": "net.peeweek.vfxgraph-extras",
+  "displayName": "Visual Effect Graph (Extras)",
+  "version": "2019.4.0",
+  "unity": "2019.4",
+  "description": "Visual Effect Graph (Extras)"
 }
