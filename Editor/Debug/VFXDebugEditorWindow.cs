@@ -40,6 +40,11 @@ namespace UnityEngine.VFX.DebugTools
             set => EditorPrefs.SetBool("VFXDebug.filterInactive", value);
         }
 
+        bool filterEmptyGroups
+        {
+            get => EditorPrefs.GetBool("VFXDebug.filterEmptyGroups", false);
+            set => EditorPrefs.SetBool("VFXDebug.filterEmptyGroups", value);
+        }
 
 
         static VFXDebugEditorWindow s_Instance;
@@ -80,6 +85,7 @@ namespace UnityEngine.VFX.DebugTools
                 GUILayout.Label("Hide:", EditorStyles.toolbarButton);
                 filterCulled = GUILayout.Toggle(filterCulled, "Culled", Styles.toolbarButton);
                 filterInactive = GUILayout.Toggle(filterInactive, "Inactive", Styles.toolbarButton);
+                filterEmptyGroups = GUILayout.Toggle(filterEmptyGroups, "EmptyGroups", Styles.toolbarButton);
 
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("...", EditorStyles.toolbarButton)) ;
@@ -103,10 +109,10 @@ namespace UnityEngine.VFX.DebugTools
                 if(groupByScene && currentScene != entry.sceneName)
                 {
                     currentScene = entry.sceneName;
-                    GUI.backgroundColor = new Color(1.5f, 1.5f, 1.5f, 1.0f);
+                    GUI.backgroundColor = new Color(.5f, .5f, .5f, 1.0f);
                     using (new GUILayout.HorizontalScope(EditorStyles.toolbar))
                     {
-                        GUILayout.Label($"Scene: {currentScene}", Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
+                        GUILayout.Label(new GUIContent($"{currentScene}",Styles.scene), Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
                     }
                 }
 
@@ -114,22 +120,24 @@ namespace UnityEngine.VFX.DebugTools
                 {
                     currentAsset = entry.asset;
                     GUI.backgroundColor = new Color(1.2f, 1.2f, 1.2f, 1.0f);
+
+                    var group = entries.Where(o => o.asset == currentAsset);
+
+                    if (groupByScene)
+                        group = group.Where(o => o.sceneName == currentScene);
+
+
+                    int count = group.Count();
+                    int actCount = group.Where(o => o.active).Count();
+                    int cullCount = group.Where(o => o.culled).Count();
+
+                    if(!(filterEmptyGroups && group.Where( o => (filterCulled ? o.culled == false : true)).Where(o => (filterInactive ? o.active == true : true)).Count() == 0))
                     using (new GUILayout.HorizontalScope(EditorStyles.toolbar))
                     {
                         if (groupByScene)
                             GUILayout.Space(24);
 
-                        var group = entries.Where(o => o.asset == currentAsset);
-
-                        if (groupByScene)
-                            group = group.Where(o => o.sceneName == currentScene);
-
-
-                        int count = group.Count();
-                        int actCount = group.Where(o => o.active).Count();
-                        int cullCount = group.Where(o => o.culled).Count();
-
-                        GUILayout.Label($"Asset: {currentAsset.name} - {count} instances, {actCount} active, {cullCount} culled", Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
+                        GUILayout.Label(new GUIContent($" {currentAsset.name} - {count} instances, {actCount} active, {cullCount} culled", Styles.vfxComp), Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
 
                     }
                 }
@@ -150,7 +158,8 @@ namespace UnityEngine.VFX.DebugTools
                     bool b = GUILayout.Toggle(entry.gameObject.activeSelf, "", EditorStyles.toggle);
                     if(entry.gameObject.activeSelf != b)
                         entry.gameObject.SetActive(b);
-                    if (GUILayout.Button(entry.name, Styles.toolbarButton, GUILayout.Width(180-18)))
+
+                    if (GUILayout.Button(new GUIContent(entry.name, Styles.gameObject), Styles.toolbarButton, GUILayout.Width(280-18)))
                     {
                         if (Selection.activeGameObject == entry.gameObject)
                             Selection.activeObject = null;
@@ -171,7 +180,7 @@ namespace UnityEngine.VFX.DebugTools
 
                     GUILayout.FlexibleSpace();
 
-                    if (GUILayout.Button(entry.asset.name, Styles.toolbarButton, GUILayout.Width(180)))
+                    if (GUILayout.Button(new GUIContent(entry.asset.name,Styles.vfxAsset), Styles.toolbarButton, GUILayout.Width(180)))
                         Selection.activeObject = entry.asset;
                     if (GUILayout.Button("Open", Styles.toolbarButton))
                     {
@@ -180,9 +189,10 @@ namespace UnityEngine.VFX.DebugTools
                             
                         VFXViewWindow.currentWindow.LoadAsset(entry.asset, entry.component);
                     }    
-                }
-                
+                } 
             }
+
+            GUILayout.Space(80);
 
             EditorGUILayout.EndScrollView();
 
@@ -208,6 +218,12 @@ namespace UnityEngine.VFX.DebugTools
             public static GUIStyle toolbarButtonBold;
             public static GUIStyle toolbarButtonRight;
 
+            public static Texture vfxAsset;
+            public static Texture vfxComp;
+            public static Texture scene;
+            public static Texture gameObject;
+            public static Texture renderer;
+
             static Styles()
             {
                 toolbarButton = new GUIStyle(EditorStyles.toolbarButton);
@@ -220,6 +236,12 @@ namespace UnityEngine.VFX.DebugTools
                 toolbarButtonBold.alignment = TextAnchor.MiddleLeft;
                 toolbarButtonBold.fontStyle = FontStyle.Bold;
 
+
+                vfxAsset = EditorGUIUtility.IconContent("VisualEffectAsset Icon").image;
+                vfxComp = EditorGUIUtility.IconContent("VisualEffect Icon").image;
+                scene = EditorGUIUtility.IconContent("UnityLogo").image;
+                gameObject = EditorGUIUtility.IconContent("GameObject Icon").image;
+                renderer = EditorGUIUtility.IconContent("SceneViewVisibility").image;
             }
         }
     }
