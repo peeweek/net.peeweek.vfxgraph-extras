@@ -83,17 +83,21 @@ namespace UnityEngine.VFX.DebugTools
             if (entries == null)
                 Reload();
 
-            using(new GUILayout.HorizontalScope(Styles.header, GUILayout.Height(64)))
+            float ms = 16.6f;
+
+            using (new GUILayout.HorizontalScope(Styles.header, GUILayout.Height(64)))
             {
                 GUILayout.Box(Contents.VFXIcon, EditorStyles.label, GUILayout.Height(64));
-                using(new GUILayout.VerticalScope())
+                using (new GUILayout.VerticalScope())
                 {
-                    GUILayout.Label("VFXGraph Debug", Styles.bigLabel);
+                    GUILayout.Label(Contents.Cache("VFXGraph Scene Debug"), Styles.bigLabel);
+                    GUILayout.Label(Contents.Cache("Profiling : Editor"), EditorStyles.label);
                 }
                 GUILayout.FlexibleSpace();
                 using (new GUILayout.VerticalScope())
                 {
-                    GUILayout.Label("FPS: XX.X", Styles.rightLabel);
+                    GUILayout.Label($"FPS: {ms.ToString("F2")}ms", Styles.rightLabel);
+                    GUILayout.FlexibleSpace();
                 }
             }
 
@@ -133,7 +137,7 @@ namespace UnityEngine.VFX.DebugTools
             string currentScene = string.Empty;
             VisualEffectAsset currentAsset = null;
 
-            foreach(var entry in entries)
+            foreach (var entry in entries)
             {
                 // Skip Invalid
                 if (!entry.valid)
@@ -152,7 +156,7 @@ namespace UnityEngine.VFX.DebugTools
                     GUI.backgroundColor = new Color(.6f, .6f, .6f, 1.0f);
                     using (new GUILayout.HorizontalScope(EditorStyles.toolbar))
                     {
-                        if(string.IsNullOrEmpty(currentScene))
+                        if (string.IsNullOrEmpty(currentScene))
                             GUILayout.Label(Contents.Cache($"-- IN PREFABS --", Contents.sceneIcon), Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
 
                         else
@@ -170,7 +174,7 @@ namespace UnityEngine.VFX.DebugTools
                     currentAsset = entry.asset;
                     GUI.backgroundColor = new Color(.8f, .8f, .8f, 1.0f);
 
-                    if(Selection.activeObject == currentAsset) GUI.backgroundColor *= new Color(1.5f,1.2f,0.8f, 1.0f);
+                    if (Selection.activeObject == currentAsset) GUI.backgroundColor *= new Color(1.5f, 1.2f, 0.8f, 1.0f);
 
                     var group = entries.Where(o => o.asset == currentAsset);
 
@@ -181,18 +185,19 @@ namespace UnityEngine.VFX.DebugTools
                     int actCount = group.Where(o => o.active).Count();
                     int cullCount = group.Where(o => o.culled).Count();
 
-                    if (!(filterEmptyGroups 
-                        && group.Where( o => (filterCulled ? o.culled == false : true))
+                    if (!(filterEmptyGroups
+                        && group.Where(o => (filterCulled ? o.culled == false : true))
                         .Where(o => (filterInactive ? o.active == true : true))
                         .Where(o => (filterString ? ContainsFilterString(o, filter) : true))
                         .Count() == 0))
-
-                    using (new GUILayout.HorizontalScope(EditorStyles.toolbar))
                     {
-                        if (groupByScene)
-                            GUILayout.Space(24);
+                        using (new GUILayout.HorizontalScope(EditorStyles.toolbar))
+                        {
+                            if (groupByScene)
+                                GUILayout.Space(24);
 
-                        GUILayout.Label(Contents.Cache($" {currentAsset.name} - {count} instances, {actCount} active, {cullCount} culled", Contents.vfxCompIcon), Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
+                            GUILayout.Label(Contents.Cache($" {currentAsset.name} - {count} instances, {actCount} active, {cullCount} culled", Contents.vfxCompIcon), Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
+                        }
                     }
                 }
                 Profiler.EndSample();
@@ -209,9 +214,9 @@ namespace UnityEngine.VFX.DebugTools
                 GUI.backgroundColor = new Color(f, f, f, 1.0f);
                 i++;
 
-                if (groupByAsset && Selection.activeObject == currentAsset) 
+                if (groupByAsset && Selection.activeObject == currentAsset)
                     GUI.backgroundColor *= new Color(1.5f, 1.2f, 0.8f, 1.0f);
-                else if (Selection.activeGameObject == entry.gameObject) 
+                else if (Selection.activeGameObject == entry.gameObject)
                     GUI.backgroundColor = new Color(0.6f, 1.4f, 2.0f, 1.0f);
 
                 Profiler.BeginSample("VFXDebugWindow.DrawItem");
@@ -227,7 +232,7 @@ namespace UnityEngine.VFX.DebugTools
                     r.width = 24;
 
                     bool b = GUI.Toggle(r, entry.gameObject.activeSelf, "", EditorStyles.toggle);
-                    if(entry.gameObject.activeSelf != b)
+                    if (entry.gameObject.activeSelf != b)
                         entry.gameObject.SetActive(b);
 
                     r.xMin = r.xMax;
@@ -251,7 +256,7 @@ namespace UnityEngine.VFX.DebugTools
                     r.xMin = r.xMax + 25; r.width = 80;
                     GUI.Label(r, $"{(entry.active ? entry.aliveCount : 0)} p.", Styles.toolbarButtonRight);
                     r.xMin = r.xMax; r.width = 56;
-                    GUI.Label(r,entry.culled ? Contents.culled : Contents.none, Styles.toolbarButton);
+                    GUI.Label(r, entry.culled ? Contents.culled : Contents.none, Styles.toolbarButton);
                     r.xMin = r.xMax; r.width = 56;
                     GUI.Label(r, entry.active ? Contents.active : Contents.none, Styles.toolbarButton);
                     r.xMin = r.xMax; r.width = 80;
@@ -260,7 +265,7 @@ namespace UnityEngine.VFX.DebugTools
                     GUI.Label(r, Vector3.Distance(SceneView.lastActiveSceneView.camera.transform.position, entry.position).ToString("F2"), Styles.toolbarButtonRight);
 
                     r.xMin = r.xMax; r.width = 32;
-                    if (GUI.Button(r, entry.paused? Contents.pauseIcon : Contents.playIcon, EditorStyles.toolbarButton))
+                    if (GUI.Button(r, entry.paused ? Contents.pauseIcon : Contents.playIcon, EditorStyles.toolbarButton))
                         entry.TogglePause();
 
                     r.xMin = r.xMax; r.width = 32;
@@ -268,11 +273,11 @@ namespace UnityEngine.VFX.DebugTools
                         entry.Restart();
 
                     r.xMin = r.xMax; r.width = 32;
-                    if (GUI.Button(r,Contents.stepIcon, EditorStyles.toolbarButton))
+                    if (GUI.Button(r, Contents.stepIcon, EditorStyles.toolbarButton))
                         entry.Step();
 
                     r.xMin = r.xMax; r.width = 32;
-                    if (GUI.Button(r,entry.rendered ? Contents.rendererOnIcon : Contents.rendererOffIcon, EditorStyles.toolbarButton))
+                    if (GUI.Button(r, entry.rendered ? Contents.rendererOnIcon : Contents.rendererOffIcon, EditorStyles.toolbarButton))
                         entry.ToggleRendered();
 
 
@@ -288,9 +293,9 @@ namespace UnityEngine.VFX.DebugTools
                     {
                         if (VFXViewWindow.currentWindow == null)
                             GetWindow<VFXViewWindow>();
-                            
+
                         VFXViewWindow.currentWindow.LoadAsset(entry.asset, entry.component);
-                    }    
+                    }
                 }
                 Profiler.EndSample();
             }
@@ -321,7 +326,6 @@ namespace UnityEngine.VFX.DebugTools
                 Profiler.EndSample();
             }
 
-
             if (groupByScene)
             {
                 Profiler.BeginSample("VFXDebug.SortByScene");
@@ -335,6 +339,7 @@ namespace UnityEngine.VFX.DebugTools
             var f = filter.ToLowerInvariant();
             return e.name.ToLowerInvariant().Contains(f) || e.asset.name.ToLowerInvariant().Contains(f);
         }
+        
 
         class Contents
         {
