@@ -281,21 +281,27 @@ namespace UnityEngine.VFX.DebugTools
                         entry.ToggleRendered();
 
 
-                    r = line;
-                    r.xMin = r.xMax - 220;
-                    r.width = 180;
+                    float m = r.xMax;
 
-                    if (GUI.Button(r, new GUIContent(entry.asset.name, Contents.vfxAssetIcon), Styles.toolbarButton))
-                        Selection.activeObject = entry.asset;
-
-                    r.xMin = r.xMax; r.width = 40;
-                    if (GUI.Button(r, "Open", Styles.toolbarButton))
+                    if(m < line.width - 180)
                     {
-                        if (VFXViewWindow.currentWindow == null)
-                            GetWindow<VFXViewWindow>();
+                        r = line;
+                        r.xMin = r.xMax - 220;
+                        r.width = 180;
 
-                        VFXViewWindow.currentWindow.LoadAsset(entry.asset, entry.component);
+                        if (GUI.Button(r, new GUIContent(entry.asset.name, Contents.vfxAssetIcon), Styles.toolbarButton))
+                            Selection.activeObject = entry.asset;
+
+                        r.xMin = r.xMax; r.width = 40;
+                        if (GUI.Button(r, "Edit", Styles.toolbarButton))
+                        {
+                            if (VFXViewWindow.currentWindow == null)
+                                GetWindow<VFXViewWindow>();
+
+                            VFXViewWindow.currentWindow.LoadAsset(entry.asset, entry.component);
+                        }
                     }
+
                 }
                 Profiler.EndSample();
             }
