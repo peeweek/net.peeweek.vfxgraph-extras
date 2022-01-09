@@ -194,7 +194,7 @@ namespace UnityEngine.VFX.DebugTools
 
                     Rect line = GUILayoutUtility.GetRect(GUIContent.none, guiSkin.box, GUILayout.ExpandWidth(true));
                     {
-                        GUI.Box(line, "");
+                        GUI.Box(line, "", guiSkin.box);
 
                         if (groupByScene) line.xMin += 24;
                         if (groupByAsset) line.xMin += 24;
