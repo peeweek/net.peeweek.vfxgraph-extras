@@ -47,6 +47,8 @@ namespace UnityEngine.VFX.DebugTools
             public void Play() { component.Play(); }
             public void Stop() { component.Stop(); }
 
+            public void Step() { component.Simulate(VFXManager.fixedTimeStep); }
+
             public float playRate
             {
                 get => component.playRate;
@@ -61,11 +63,17 @@ namespace UnityEngine.VFX.DebugTools
 
         }
 
-        public static void UpdateAll(ref List<DebugEntry> list)
+        public static void UpdateAll(ref List<DebugEntry> list, bool deepSearch)
         {
             if (list == null) list = new List<DebugEntry>();
 
-            var all = Object.FindObjectsOfType(typeof(VisualEffect)) as VisualEffect[];
+
+            VisualEffect[] all;
+            if(deepSearch)
+                all = Resources.FindObjectsOfTypeAll(typeof(VisualEffect)) as VisualEffect[];
+            else
+                all= Object.FindObjectsOfType(typeof(VisualEffect)) as VisualEffect[];
+
             foreach (var c in all)
             {
                 if (!list.Any(e => e.component == c))
@@ -80,11 +88,11 @@ namespace UnityEngine.VFX.DebugTools
 
         public static void SortByScene(ref List<DebugEntry> list)
         {
-            list.Sort((a, b) => a.sceneName.CompareTo(b.sceneName));
+            list = list.OrderBy(a => a.sceneName).ToList();
         }
         public static void SortByAsset(ref List<DebugEntry> list)
         {
-            list.Sort((a, b) => a.asset.name.CompareTo(b.asset.name));
+            list = list.OrderBy(a => a.asset.name).ToList();
         }
 
         public static void SortByDistanceTo(Vector3 position, ref List<DebugEntry> list, bool ascending = true)
