@@ -17,7 +17,7 @@ namespace UnityEngine.VFX.DebugTools
         [SerializeField]
         bool handleCursorVisibility;
 
-        bool visible = false;
+        public bool visible = false;
 
         void Awake()
         {
