@@ -47,7 +47,7 @@ namespace UnityEngine.VFX.DebugTools
             public void Play() { component.Play(); }
             public void Stop() { component.Stop(); }
 
-            public void Step() { component.Simulate(VFXManager.fixedTimeStep); }
+            public void Step() { SetPaused(true); component.Simulate(VFXManager.fixedTimeStep); }
 
             public float playRate
             {

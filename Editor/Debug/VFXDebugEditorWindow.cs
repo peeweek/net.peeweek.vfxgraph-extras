@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 using UnityEditor;
 using UnityEditor.VFX.UI;
 using UnityEngine.Profiling;
+using UnityEditor.SceneManagement;
 
 namespace UnityEngine.VFX.DebugTools
 {
@@ -69,19 +70,37 @@ namespace UnityEngine.VFX.DebugTools
             titleContent = new GUIContent("VFXGraph Debug");
             minSize = new Vector2(440, 280);
             autoRepaintOnSceneChange = true;
+
+            if (entries == null)
+                entries = new List<VFXDebug.DebugEntry>();
+            
+            Reload(true);
+            EditorSceneManager.sceneClosed += EditorSceneManager_sceneClosed;
+            EditorSceneManager.sceneLoaded += EditorSceneManager_sceneLoaded;
+        }
+
+        private void EditorSceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)
+        {
+            entries.Clear();
+        }
+
+        private void EditorSceneManager_sceneClosed(Scene scene)
+        {
+            entries.Clear();
+        }
+
+        private void OnDisable()
+        {
+            EditorSceneManager.sceneClosed -= EditorSceneManager_sceneClosed;
+            EditorSceneManager.sceneLoaded -= EditorSceneManager_sceneLoaded;
         }
 
         List<VFXDebug.DebugEntry> entries;
 
-
         Vector2 scroll;
-
-
 
         private void OnGUI()
         {
-            if (entries == null)
-                Reload();
 
             float ms = 16.6f;
 
@@ -123,9 +142,12 @@ namespace UnityEngine.VFX.DebugTools
                 filter = GUILayout.TextField(filter, EditorStyles.toolbarSearchField, GUILayout.Width(280));
 
                 GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Deep Search", Styles.toolbarButton))
+
+                if (GUILayout.Button(Contents.restartIcon, Styles.toolbarButton))
+                {
+                    entries.Clear();
                     Reload(true);
-                if (GUILayout.Button("...", EditorStyles.toolbarButton)) ;
+                }
             }
             Profiler.EndSample();
 
@@ -312,6 +334,7 @@ namespace UnityEngine.VFX.DebugTools
 
             Profiler.BeginSample("VFXDebugWindow.Reload");
             Reload();
+
             Profiler.EndSample();
         }
 
@@ -322,7 +345,10 @@ namespace UnityEngine.VFX.DebugTools
             Profiler.EndSample();
 
             Profiler.BeginSample("VFXDebug.SortByDistanceTo");
-            VFXDebug.SortByDistanceTo(SceneView.lastActiveSceneView.camera.transform.position, ref entries);
+            if(SceneView.lastActiveSceneView != null)
+                VFXDebug.SortByDistanceTo(SceneView.lastActiveSceneView.camera.transform.position, ref entries);
+            else
+                VFXDebug.SortByDistanceTo(Vector3.zero, ref entries);
             Profiler.EndSample();
 
             if (groupByAsset)
