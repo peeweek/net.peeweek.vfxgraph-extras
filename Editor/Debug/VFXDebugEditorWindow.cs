@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine.SceneManagement;
 using UnityEditor;
 using UnityEditor.VFX.UI;
+using UnityEngine.Profiling;
 
 namespace UnityEngine.VFX.DebugTools
 {
@@ -84,7 +85,7 @@ namespace UnityEngine.VFX.DebugTools
 
             using(new GUILayout.HorizontalScope(Styles.header, GUILayout.Height(64)))
             {
-                GUILayout.Box(Styles.vfx, EditorStyles.label, GUILayout.Height(64));
+                GUILayout.Box(Contents.VFXIcon, EditorStyles.label, GUILayout.Height(64));
                 using(new GUILayout.VerticalScope())
                 {
                     GUILayout.Label("VFXGraph Debug", Styles.bigLabel);
@@ -138,6 +139,7 @@ namespace UnityEngine.VFX.DebugTools
                 if (filterPrefabAssets && string.IsNullOrEmpty(entry.sceneName))
                     continue;
 
+
                 // Display group header if new scene
                 if(groupByScene && currentScene != entry.sceneName)
                 {
@@ -146,10 +148,10 @@ namespace UnityEngine.VFX.DebugTools
                     using (new GUILayout.HorizontalScope(EditorStyles.toolbar))
                     {
                         if(string.IsNullOrEmpty(currentScene))
-                            GUILayout.Label(new GUIContent($"-- IN PREFABS --", Styles.scene), Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
+                            GUILayout.Label(new GUIContent($"-- IN PREFABS --", Contents.sceneIcon), Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
 
                         else
-                            GUILayout.Label(new GUIContent($"{currentScene}",Styles.scene), Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
+                            GUILayout.Label(new GUIContent($"{currentScene}", Contents.sceneIcon), Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
                     }
                 }
 
@@ -183,7 +185,7 @@ namespace UnityEngine.VFX.DebugTools
                         if (groupByScene)
                             GUILayout.Space(24);
 
-                        GUILayout.Label(new GUIContent($" {currentAsset.name} - {count} instances, {actCount} active, {cullCount} culled", Styles.vfxComp), Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
+                        GUILayout.Label(new GUIContent($" {currentAsset.name} - {count} instances, {actCount} active, {cullCount} culled", Contents.vfxCompIcon), Styles.toolbarButtonBold, GUILayout.ExpandWidth(true));
                     }
                 }
 
@@ -200,6 +202,8 @@ namespace UnityEngine.VFX.DebugTools
                 else if (Selection.activeGameObject == entry.gameObject) 
                     GUI.backgroundColor *= new Color(0.8f, 1.2f, 1.8f, 1.0f);
 
+                Profiler.BeginSample("VFXDebugWindow.DrawItem");
+
                 using (new GUILayout.HorizontalScope(EditorStyles.toolbar))
                 {
                     if (groupByScene) GUILayout.Space(24);
@@ -210,7 +214,7 @@ namespace UnityEngine.VFX.DebugTools
                     if(entry.gameObject.activeSelf != b)
                         entry.gameObject.SetActive(b);
 
-                    if (GUILayout.Button(new GUIContent(entry.name, Styles.gameObject), Styles.toolbarButton, GUILayout.Width(280-18)))
+                    if (GUILayout.Button(new GUIContent(entry.name, Contents.gameObjectIcon), Styles.toolbarButton, GUILayout.Width(280-18)))
                     {
                         if (Selection.activeGameObject == entry.gameObject)
                             Selection.activeObject = null;
@@ -224,27 +228,27 @@ namespace UnityEngine.VFX.DebugTools
                     }
                     GUILayout.Space(25);
                     GUILayout.Label($"{(entry.active ? entry.aliveCount : 0)} p.", Styles.toolbarButtonRight, GUILayout.Width(80));
-                    GUILayout.Label(entry.culled ? "Culled" : "", Styles.toolbarButton, GUILayout.Width(56));
-                    GUILayout.Label(entry.active ? "Active" : "", Styles.toolbarButton, GUILayout.Width(56));
-                    GUILayout.Label(entry.resetSeedOnPlay ? "#RESEED#" : entry.seed.ToString(), Styles.toolbarButton, GUILayout.Width(80));
+                    GUILayout.Label(entry.culled ? Contents.culled : Contents.none, Styles.toolbarButton, GUILayout.Width(56));
+                    GUILayout.Label(entry.active ? Contents.active : Contents.none, Styles.toolbarButton, GUILayout.Width(56));
+                    GUILayout.Label(entry.resetSeedOnPlay ? Contents.reseed : Contents.Seed(entry.seed), Styles.toolbarButton, GUILayout.Width(80));
                     GUILayout.Label(Vector3.Distance(SceneView.lastActiveSceneView.camera.transform.position, entry.position).ToString("F2"), Styles.toolbarButtonRight, GUILayout.Width(80));
 
-                    if(GUILayout.Button(entry.paused? Styles.pause : Styles.play, EditorStyles.toolbarButton, GUILayout.Width(32)))
+                    if(GUILayout.Button(entry.paused? Contents.pauseIcon : Contents.playIcon, EditorStyles.toolbarButton, GUILayout.Width(32)))
                         entry.TogglePause();
 
-                    if (GUILayout.Button(Styles.restart, EditorStyles.toolbarButton, GUILayout.Width(32)))
+                    if (GUILayout.Button(Contents.restartIcon, EditorStyles.toolbarButton, GUILayout.Width(32)))
                         entry.Restart();
 
-                    if (GUILayout.Button(Styles.step, EditorStyles.toolbarButton, GUILayout.Width(32)))
+                    if (GUILayout.Button(Contents.stepIcon, EditorStyles.toolbarButton, GUILayout.Width(32)))
                         entry.Step();
 
-                    if (GUILayout.Button(entry.rendered ? Styles.rendererOn : Styles.rendererOff, EditorStyles.toolbarButton, GUILayout.Width(32)))
+                    if (GUILayout.Button(entry.rendered ? Contents.rendererOnIcon : Contents.rendererOffIcon, EditorStyles.toolbarButton, GUILayout.Width(32)))
                         entry.ToggleRendered();
 
 
                     GUILayout.FlexibleSpace();
 
-                    if (GUILayout.Button(new GUIContent(entry.asset.name,Styles.vfxAsset), Styles.toolbarButton, GUILayout.Width(180)))
+                    if (GUILayout.Button(new GUIContent(entry.asset.name, Contents.vfxAssetIcon), Styles.toolbarButton, GUILayout.Width(180)))
                         Selection.activeObject = entry.asset;
                     if (GUILayout.Button("Open", Styles.toolbarButton))
                     {
@@ -253,27 +257,42 @@ namespace UnityEngine.VFX.DebugTools
                             
                         VFXViewWindow.currentWindow.LoadAsset(entry.asset, entry.component);
                     }    
-                } 
+                }
+                Profiler.EndSample();
             }
 
             GUILayout.Space(80);
 
             EditorGUILayout.EndScrollView();
 
+            
             Reload();
         }
 
         void Reload(bool deepSearch = false)
         {
+            Profiler.BeginSample("VFXDebug.UpdateAll");
             VFXDebug.UpdateAll(ref entries, deepSearch);
+            Profiler.EndSample();
 
+            Profiler.BeginSample("VFXDebug.SortByDistanceTo");
             VFXDebug.SortByDistanceTo(SceneView.lastActiveSceneView.camera.transform.position, ref entries);
+            Profiler.EndSample();
 
             if (groupByAsset)
+            {
+                Profiler.BeginSample("VFXDebug.SortByAsset");
                 VFXDebug.SortByAsset(ref entries);
+                Profiler.EndSample();
+            }
+
 
             if (groupByScene)
+            {
+                Profiler.BeginSample("VFXDebug.SortByScene");
                 VFXDebug.SortByScene(ref entries);
+                Profiler.EndSample();
+            }
         }
 
         bool ContainsFilterString(VFXDebug.DebugEntry e, string filter)
@@ -282,7 +301,69 @@ namespace UnityEngine.VFX.DebugTools
             return e.name.ToLowerInvariant().Contains(f) || e.asset.name.ToLowerInvariant().Contains(f);
         }
 
+        class Contents
+        {
+            public static Texture vfxAssetIcon;
+            public static Texture vfxCompIcon;
+            public static Texture sceneIcon;
+            public static Texture gameObjectIcon;
+            public static Texture rendererIcon;
 
+            public static GUIContent playIcon;
+            public static GUIContent pauseIcon;
+            public static GUIContent restartIcon;
+            public static GUIContent stepIcon;
+
+            public static GUIContent rendererOnIcon;
+            public static GUIContent rendererOffIcon;
+
+            public static GUIContent VFXIcon;
+
+
+            public static GUIContent none;
+            public static GUIContent culled;
+            public static GUIContent active;
+            public static GUIContent reseed;
+
+            static Dictionary<uint, GUIContent> seeds;
+
+
+            public static GUIContent Seed(uint seed)
+            {
+                if (!seeds.ContainsKey(seed))
+                    seeds.Add(seed, new GUIContent(seed.ToString()));
+
+                return seeds[seed];
+            }
+
+            static Contents()
+            {
+                seeds = new Dictionary<uint, GUIContent>();
+
+                vfxAssetIcon = EditorGUIUtility.IconContent("VisualEffectAsset Icon").image;
+                vfxCompIcon = EditorGUIUtility.IconContent("VisualEffect Icon").image;
+                sceneIcon = EditorGUIUtility.IconContent("UnityLogo").image;
+                gameObjectIcon = EditorGUIUtility.IconContent("GameObject Icon").image;
+                rendererIcon = EditorGUIUtility.IconContent("SceneViewVisibility").image;
+
+
+                playIcon = EditorGUIUtility.IconContent("PlayButton On");
+                pauseIcon = EditorGUIUtility.IconContent("PauseButton On");
+                restartIcon = EditorGUIUtility.IconContent("preAudioAutoPlayOff");
+                stepIcon = EditorGUIUtility.IconContent("StepButton On");
+
+                rendererOnIcon = EditorGUIUtility.IconContent("animationvisibilitytoggleon");
+                rendererOffIcon = EditorGUIUtility.IconContent("animationvisibilitytoggleoff");
+
+                VFXIcon = EditorGUIUtility.IconContent("VisualEffectAsset Icon");
+
+                none = new GUIContent("");
+                culled = new GUIContent("Culled");
+                active = new GUIContent("Active");
+                reseed = new GUIContent("# RESEED #");
+            }
+
+        }
 
         class Styles
         {
@@ -294,23 +375,6 @@ namespace UnityEngine.VFX.DebugTools
 
             public static GUIStyle bigLabel;
             public static GUIStyle rightLabel;
-
-
-            public static Texture vfxAsset;
-            public static Texture vfxComp;
-            public static Texture scene;
-            public static Texture gameObject;
-            public static Texture renderer;
-
-            public static GUIContent play;
-            public static GUIContent pause;
-            public static GUIContent restart;
-            public static GUIContent step;
-
-            public static GUIContent rendererOn;
-            public static GUIContent rendererOff;
-
-            public static GUIContent vfx;
 
             static Styles()
             {
@@ -333,22 +397,6 @@ namespace UnityEngine.VFX.DebugTools
                 rightLabel = new GUIStyle(EditorStyles.label);
                 rightLabel.alignment = TextAnchor.MiddleRight;
 
-                vfxAsset = EditorGUIUtility.IconContent("VisualEffectAsset Icon").image;
-                vfxComp = EditorGUIUtility.IconContent("VisualEffect Icon").image;
-                scene = EditorGUIUtility.IconContent("UnityLogo").image;
-                gameObject = EditorGUIUtility.IconContent("GameObject Icon").image;
-                renderer = EditorGUIUtility.IconContent("SceneViewVisibility").image;
-
-
-                play = EditorGUIUtility.IconContent("PlayButton On");
-                pause = EditorGUIUtility.IconContent("PauseButton On");
-                restart = EditorGUIUtility.IconContent("preAudioAutoPlayOff");
-                step = EditorGUIUtility.IconContent("StepButton On");
-
-                rendererOn = EditorGUIUtility.IconContent("animationvisibilitytoggleon");
-                rendererOff = EditorGUIUtility.IconContent("animationvisibilitytoggleoff");
-
-                vfx = EditorGUIUtility.IconContent("VisualEffectAsset Icon");
             }
         }
     }
