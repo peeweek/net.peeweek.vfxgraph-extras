@@ -43,7 +43,7 @@ namespace UnityEngine.VFX.DebugTools
             public bool paused => component.pause;
 
             public void Reset() { component.Reinit(); }
-            public void Restart() { Reset(); Play(); }
+            public void Restart() { SetPaused(false); Reset();  Play(); }
             public void Play() { component.Play(); }
             public void Stop() { component.Stop(); }
 

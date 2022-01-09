@@ -224,7 +224,7 @@ namespace UnityEngine.VFX.DebugTools
                         GUI.Label(r, Vector3.Distance(Camera.main != null ? Camera.main.transform.position : Vector3.zero, entry.position).ToString("F2"));
 
                         r.xMin = r.xMax; r.width = 32;
-                        if (GUI.Button(r, entry.paused ? "׀׀" : "►"))
+                        if (GUI.Button(r, entry.paused ? "׀׀" : " ►"))
                             entry.TogglePause();
 
                         r.xMin = r.xMax; r.width = 32;
@@ -236,11 +236,15 @@ namespace UnityEngine.VFX.DebugTools
                             entry.Step();
 
                         r.xMin = r.xMax; r.width = 80;
-                        if (GUI.Button(r, entry.rendered?"Render On" : "Render Off"))
+                        if (GUI.Button(r, entry.rendered?" Render On " : " Render OFF "))
                             entry.ToggleRendered();
 
-                        r.xMin = r.xMax; r.width = 180;
-                        GUI.Label(r, entry.asset.name);
+                        if(!groupByAsset)
+                        {
+                            r.xMin = r.xMax; r.width = 180;
+                            GUI.Label(r, $" Asset : {entry.asset.name}");
+                        }
+
                     }
                 }
 
