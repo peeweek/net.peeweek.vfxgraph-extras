@@ -115,7 +115,7 @@ namespace UnityEngine.VFX.DebugTools
                 GUILayout.FlexibleSpace();
                 using (new GUILayout.VerticalScope())
                 {
-                    GUILayout.Label($"FPS: {ms.ToString("F2")}ms", Styles.rightLabel);
+                    GUILayout.Label($"", Styles.rightLabel);
                     GUILayout.FlexibleSpace();
                 }
             }
