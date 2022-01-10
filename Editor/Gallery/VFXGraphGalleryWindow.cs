@@ -50,7 +50,9 @@ namespace UnityEditor.VFX
             foreach(var guid in assets)
             {
                 var template = (VFXGraphGalleryTemplate)AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(guid), typeof(VFXGraphGalleryTemplate));
-                categories.Add(template);
+                
+                if(template.templates != null && template.templates.Length > 0)
+                    categories.Add(template);
             }
 
             categories.Sort((a, b) => a.categoryName.CompareTo(b.categoryName));
@@ -60,8 +62,7 @@ namespace UnityEditor.VFX
         }
 
         private void OnGUI()
-        {
-            
+        { 
             using (new GUILayout.HorizontalScope(Styles.header, GUILayout.Height(80)))
             {
                 GUILayout.Box(Contents.VFXIcon, EditorStyles.label, GUILayout.Height(64));
@@ -110,6 +111,10 @@ namespace UnityEditor.VFX
                             if (i % 3 == 0)
                                 GUILayout.BeginHorizontal();
 
+                            if (source != null && source == t.templateAsset)
+                                GUI.backgroundColor = new Color(0.6f, 1.2f, 1.6f, 1.0f);
+
+
                             using (new GUILayout.VerticalScope(Styles.galButton, GUILayout.Width((width/3) - 8), GUILayout.Height(128)))
                             {
                                 GUILayout.Space(8);
@@ -130,9 +135,11 @@ namespace UnityEditor.VFX
                                 GUILayout.EndHorizontal();
 
                             i++;
+
+                            GUI.backgroundColor = Color.white;
                         }
 
-                        if (i % 3 <= 2)
+                        if ((i-1) % 3 < 2)
                         {
                             GUILayout.FlexibleSpace();
                             GUILayout.EndHorizontal();
