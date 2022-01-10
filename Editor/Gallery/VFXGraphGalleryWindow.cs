@@ -32,12 +32,12 @@ namespace UnityEditor.VFX
         Vector2 scroll;
         Vector2 scrollDesc;
 
-        VisualEffectAsset source;
 
         List<VFXGraphGalleryTemplate> categories;
 
         VFXGraphGalleryTemplate.Template selected;
         string selectedCategory;
+        VisualEffectAsset selectedSource;
 
         void UpdateTemplates()
         {
@@ -59,6 +59,7 @@ namespace UnityEditor.VFX
 
             selected = categories[0].templates[0];
             selectedCategory = categories[0].categoryName;
+            selectedSource = selected.templateAsset;
         }
 
         private void OnGUI()
@@ -111,7 +112,7 @@ namespace UnityEditor.VFX
                             if (i % 3 == 0)
                                 GUILayout.BeginHorizontal();
 
-                            if (source != null && source == t.templateAsset)
+                            if (selectedSource != null && selectedSource == t.templateAsset)
                                 GUI.backgroundColor = new Color(0.6f, 1.2f, 1.6f, 1.0f);
 
 
@@ -127,7 +128,7 @@ namespace UnityEditor.VFX
                                 {
                                     selected = t;
                                     selectedCategory = !string.IsNullOrEmpty(category.categoryName)? category.categoryName : category.name;
-                                    source = selected.templateAsset;
+                                    selectedSource = selected.templateAsset;
                                 }
                             }
 
@@ -174,14 +175,14 @@ namespace UnityEditor.VFX
             using (new GUILayout.HorizontalScope(GUILayout.Height(24)))
             {
                 if (debug)
-                    source = (VisualEffectAsset)EditorGUILayout.ObjectField("##DEBUG## Source ", source, typeof(VisualEffectAsset), false);
+                    selectedSource = (VisualEffectAsset)EditorGUILayout.ObjectField("##DEBUG## Source ", selectedSource, typeof(VisualEffectAsset), false);
                 else
                     GUILayout.FlexibleSpace();
 
-                EditorGUI.BeginDisabledGroup(source == null);
+                EditorGUI.BeginDisabledGroup(selectedSource == null);
                 if (GUILayout.Button("Create", GUILayout.Width(80),GUILayout.Height(22)))
                 {
-                    string sourceAssetPath = AssetDatabase.GetAssetPath(source);
+                    string sourceAssetPath = AssetDatabase.GetAssetPath(selectedSource);
                     AssetDatabase.CopyAsset(sourceAssetPath, outPath);
                     var asset = AssetDatabase.LoadAssetAtPath(outPath, typeof(VisualEffectAsset));
                     ProjectWindowUtil.ShowCreatedAsset(asset);
@@ -192,8 +193,6 @@ namespace UnityEditor.VFX
                 GUILayout.Space(8);
 
             }
-
-            
         }
         class Contents
         {
