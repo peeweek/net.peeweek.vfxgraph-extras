@@ -101,6 +101,9 @@ namespace UnityEngine.VFX.DebugTools
 
         private void OnGUI()
         {
+            Profiler.BeginSample("VFXDebugWindow.Reload");
+            Reload();
+            Profiler.EndSample();
 
             float ms = 16.6f;
 
@@ -332,10 +335,7 @@ namespace UnityEngine.VFX.DebugTools
 
             EditorGUILayout.EndScrollView();
 
-            Profiler.BeginSample("VFXDebugWindow.Reload");
-            Reload();
 
-            Profiler.EndSample();
         }
 
         void Reload(bool deepSearch = false)
