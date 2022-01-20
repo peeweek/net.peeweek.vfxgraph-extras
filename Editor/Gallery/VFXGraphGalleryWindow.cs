@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor.VFX.UI;
 using UnityEngine;
 using UnityEngine.VFX;
 
@@ -38,6 +39,20 @@ namespace UnityEditor.VFX
         VFXGraphGalleryTemplate.Template selected;
         string selectedCategory;
         VisualEffectAsset selectedSource;
+
+        bool createGameObject
+        {
+            get
+            {
+                return EditorPrefs.GetBool("VFXGraphGalleryWindow.createGameObject", false);
+            }
+
+            set
+            {
+                EditorPrefs.SetBool("VFXGraphGalleryWindow.createGameObject", value);
+            }
+        }
+
 
         void UpdateTemplates()
         {
@@ -174,19 +189,36 @@ namespace UnityEditor.VFX
             EditorGUI.DrawRect(new Rect(0, 448, 800, 1), Color.black);
             using (new GUILayout.HorizontalScope(GUILayout.Height(24)))
             {
-                if (debug)
-                    selectedSource = (VisualEffectAsset)EditorGUILayout.ObjectField("##DEBUG## Source ", selectedSource, typeof(VisualEffectAsset), false);
-                else
-                    GUILayout.FlexibleSpace();
+                GUILayout.Space(8);
+                createGameObject = GUILayout.Toggle(createGameObject, "Create Game Object");
+
+                GUILayout.FlexibleSpace();
 
                 EditorGUI.BeginDisabledGroup(selectedSource == null);
+
                 if (GUILayout.Button("Create", GUILayout.Width(80),GUILayout.Height(22)))
                 {
                     string sourceAssetPath = AssetDatabase.GetAssetPath(selectedSource);
                     AssetDatabase.CopyAsset(sourceAssetPath, outPath);
                     var asset = AssetDatabase.LoadAssetAtPath(outPath, typeof(VisualEffectAsset));
                     ProjectWindowUtil.ShowCreatedAsset(asset);
-                    AssetDatabase.OpenAsset(asset);
+
+                    VFXViewWindow window = EditorWindow.GetWindow<VFXViewWindow>();
+
+                    if (createGameObject)
+                    {
+                        var go = new GameObject();
+                        go.transform.position = SceneView.lastActiveSceneView.camera.transform.position + SceneView.lastActiveSceneView.camera.transform.forward * 4;
+                        go.name = asset.name;
+                        var vfx = go.AddComponent<VisualEffect>();
+                        vfx.visualEffectAsset = asset as VisualEffectAsset;
+                        Selection.activeGameObject = go;
+                        window.LoadAsset(asset as VisualEffectAsset, vfx );
+                    }
+                    else
+                    {
+                        window.LoadAsset(asset as VisualEffectAsset, null);
+                    }
                     Close();
                 }
                 EditorGUI.EndDisabledGroup();
@@ -201,9 +233,7 @@ namespace UnityEditor.VFX
             public static Texture sceneIcon;
             public static Texture gameObjectIcon;
             public static Texture rendererIcon;
-
             public static Texture emptyPreview;
-
 
             public static GUIContent playIcon;
             public static GUIContent pauseIcon;

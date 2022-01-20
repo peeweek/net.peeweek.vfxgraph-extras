@@ -4,7 +4,7 @@ using UnityEngine.VFX;
 
 namespace UnityEditor.VFX
 {
-    [CreateAssetMenu(fileName ="New VFX Template.asset", menuName = "Visual Effects/Visual Effect Graph Template", order = 2)]
+    [CreateAssetMenu(fileName ="New VFX Template.asset", menuName = "Visual Effects/Visual Effect Graph Template", order = 310)]
     public class VFXGraphGalleryTemplate : ScriptableObject
     {
         public string categoryName;

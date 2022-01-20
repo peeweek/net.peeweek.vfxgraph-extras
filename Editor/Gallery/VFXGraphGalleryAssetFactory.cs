@@ -6,7 +6,7 @@ namespace UnityEditor.VFX
 {
     internal class VFXGraphGalleryAssetFactory
     {
-        [MenuItem("Assets/Create/Visual Effects/Visual Effect Graph (from Template)", priority = 1)]
+        [MenuItem("Assets/Create/Visual Effects/Visual Effect Graph (from Template)", priority = 305)]
         private static void MenuCreateVFXGraphGalleryAsset()
         {
             var icon = EditorGUIUtility.FindTexture(typeof(VisualEffectAsset));
