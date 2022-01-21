@@ -7,13 +7,31 @@ namespace UnityEditor.VFX
 {
     public class VFXGraphGalleryWindow : EditorWindow
     {
+        enum WindowMode
+        {
+            CreateAsset,
+            AddNode
+        }
+
+
+
+        WindowMode mode;
         string outPath; 
         bool debug = false;
+        Vector2 addPosition;
+
         public static void OpenWindowCreateAsset(string outPath)
         {
-            var window = GetWindow<VFXGraphGalleryWindow>(true);
+            var window = GetWindow<VFXGraphGalleryWindow>(true, "Create New VFX Asset", true);
             window.outPath = outPath;
-            window.SetTitle($"Create New VFX Asset");
+            window.mode = WindowMode.CreateAsset;
+        }
+
+        public static void OpenWindowAddTemplate(Vector2 addPosition)
+        {
+            var window = GetWindow<VFXGraphGalleryWindow>(true, $"Create New System from Template", true);
+            window.mode = WindowMode.AddNode;
+            window.addPosition = addPosition;
         }
 
         private void OnEnable()
@@ -84,22 +102,16 @@ namespace UnityEditor.VFX
                 GUILayout.Box(Contents.VFXIcon, EditorStyles.label, GUILayout.Height(64));
                 using (new GUILayout.VerticalScope())
                 {
-                    GUILayout.Label(Contents.Cache("Select a Starting Point"), Styles.bigLabel);
+                    if(mode == WindowMode.AddNode)
+                        GUILayout.Label(Contents.Cache("Let's Add a new System to our Graph"), Styles.bigLabel);
+                    else if (mode == WindowMode.CreateAsset)
+                        GUILayout.Label(Contents.Cache("Let's Select a template as Starting Point"), Styles.bigLabel);
+                    else
+                        GUILayout.Label(Contents.Cache("## NOT IMPLEMENTED ##"), Styles.bigLabel);
+
                     GUILayout.Label(Contents.Cache("Pick a template from the gallery"), EditorStyles.label);
                 }
                 GUILayout.FlexibleSpace();
-                using (new GUILayout.VerticalScope())
-                {
-                    GUILayout.Label($"{outPath}", Styles.rightLabel);
-                    GUILayout.FlexibleSpace();
-                    using(new GUILayout.HorizontalScope())
-                    {
-                        GUILayout.FlexibleSpace();
-
-                        if (GUILayout.Button("Reload", GUILayout.Width(80)))
-                            UpdateTemplates();
-                    }
-                }
             }
             EditorGUI.DrawRect(new Rect(0, 80, 800, 1), Color.black);
 
@@ -187,42 +199,65 @@ namespace UnityEditor.VFX
             }
             GUILayout.Space(4);
             EditorGUI.DrawRect(new Rect(0, 448, 800, 1), Color.black);
+
+            bool pressedReturn = Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return;
+
             using (new GUILayout.HorizontalScope(GUILayout.Height(24)))
             {
-                GUILayout.Space(8);
-                createGameObject = GUILayout.Toggle(createGameObject, "Create Game Object");
-
-                GUILayout.FlexibleSpace();
-
-                EditorGUI.BeginDisabledGroup(selectedSource == null);
-
-                if (GUILayout.Button("Create", GUILayout.Width(80),GUILayout.Height(22)))
+                if (mode == WindowMode.CreateAsset)
                 {
-                    string sourceAssetPath = AssetDatabase.GetAssetPath(selectedSource);
-                    AssetDatabase.CopyAsset(sourceAssetPath, outPath);
-                    var asset = AssetDatabase.LoadAssetAtPath(outPath, typeof(VisualEffectAsset));
-                    ProjectWindowUtil.ShowCreatedAsset(asset);
 
-                    VFXViewWindow window = EditorWindow.GetWindow<VFXViewWindow>();
+                    GUILayout.Space(8);
+                    createGameObject = GUILayout.Toggle(createGameObject, "Create Game Object");
 
-                    if (createGameObject)
+                    GUILayout.FlexibleSpace();
+
+                    EditorGUI.BeginDisabledGroup(selectedSource == null);
+
+                    if (GUILayout.Button("Create", GUILayout.Width(80), GUILayout.Height(22)) || pressedReturn )
                     {
-                        var go = new GameObject();
-                        go.transform.position = SceneView.lastActiveSceneView.camera.transform.position + SceneView.lastActiveSceneView.camera.transform.forward * 4;
-                        go.name = asset.name;
-                        var vfx = go.AddComponent<VisualEffect>();
-                        vfx.visualEffectAsset = asset as VisualEffectAsset;
-                        Selection.activeGameObject = go;
-                        window.LoadAsset(asset as VisualEffectAsset, vfx );
+                        string sourceAssetPath = AssetDatabase.GetAssetPath(selectedSource);
+                        AssetDatabase.CopyAsset(sourceAssetPath, outPath);
+                        var asset = AssetDatabase.LoadAssetAtPath(outPath, typeof(VisualEffectAsset));
+                        ProjectWindowUtil.ShowCreatedAsset(asset);
+
+                        VFXViewWindow window = EditorWindow.GetWindow<VFXViewWindow>();
+
+                        if (createGameObject)
+                        {
+                            var go = new GameObject();
+                            go.transform.position = SceneView.lastActiveSceneView.camera.transform.position + SceneView.lastActiveSceneView.camera.transform.forward * 4;
+                            go.name = asset.name;
+                            var vfx = go.AddComponent<VisualEffect>();
+                            vfx.visualEffectAsset = asset as VisualEffectAsset;
+                            Selection.activeGameObject = go;
+                            window.LoadAsset(asset as VisualEffectAsset, vfx);
+                        }
+                        else
+                        {
+                            window.LoadAsset(asset as VisualEffectAsset, null);
+                        }
+                        Close();
                     }
-                    else
-                    {
-                        window.LoadAsset(asset as VisualEffectAsset, null);
-                    }
-                    Close();
+                    EditorGUI.EndDisabledGroup();
+                    GUILayout.Space(8);
                 }
-                EditorGUI.EndDisabledGroup();
-                GUILayout.Space(8);
+                else if (mode == WindowMode.AddNode)
+                {
+                    GUILayout.FlexibleSpace();
+                    EditorGUI.BeginDisabledGroup(selectedSource == null);
+
+                    if (GUILayout.Button("Add System", GUILayout.Width(100), GUILayout.Height(22)) || pressedReturn)
+                    {
+                        VFXViewWindow.currentWindow.graphView.CreateTemplateSystem(AssetDatabase.GetAssetPath(selectedSource), addPosition, null);
+                        Close();
+                    }
+                    EditorGUI.EndDisabledGroup();
+                    GUILayout.Space(8);
+                }
+                else
+                    throw new System.NotImplementedException();
+
 
             }
         }

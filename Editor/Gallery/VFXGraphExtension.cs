@@ -1,12 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEditor.VFX.UI;
 using UnityEditor;
-using UnityEditor.VFX.UI;
 using UnityEngine.UIElements;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEditor.VFX;
+using UnityEngine.VFX;
 
 static class VFXGraphExtension
 {
@@ -40,8 +38,39 @@ static class VFXGraphExtension
     {
         if(e.keyCode == KeyCode.T)
         {
-            VFXGraphGalleryWindow.OpenWindowCreateAsset("");
+            var wnd = VFXViewWindow.currentWindow;
+            Vector2 pos = e.originalMousePosition;
+            pos = wnd.graphView.ChangeCoordinatesTo(wnd.graphView.contentViewContainer, pos);
+            OpenAddCreateWindow(pos);
         }
+    }
+
+    static void OpenAddCreateWindowScreenCenter()
+    {
+        var wnd = VFXViewWindow.currentWindow;
+        Vector2 pos = wnd.graphView.ScreenToViewPosition(wnd.position.center);
+        pos = wnd.graphView.ChangeCoordinatesTo(wnd.graphView.contentViewContainer, pos);
+        OpenAddCreateWindow(pos);
+    }
+
+    static void OpenAddCreateWindow(Vector2 pos)
+    {
+        VFXGraphGalleryWindow.OpenWindowAddTemplate(pos);
+    }
+
+    static void CreateGameObjectAndAttach()
+    {
+        var resource = VFXViewWindow.currentWindow.graphView.controller.model.visualEffectObject.GetResource();
+        if (resource == null)
+            return;
+        var asset = resource.asset;
+        var go = new GameObject();
+        go.transform.position = SceneView.lastActiveSceneView.camera.transform.position + SceneView.lastActiveSceneView.camera.transform.forward * 4;
+        go.name = asset.name;
+        var vfx = go.AddComponent<VisualEffect>();
+        vfx.visualEffectAsset = asset;
+        Selection.activeGameObject = go;
+        VFXViewWindow.currentWindow.LoadAsset(asset, vfx);
     }
 
     class VFXExtensionBoard : GraphElement
@@ -73,7 +102,9 @@ static class VFXGraphExtension
         void OnClick()
         {
             GenericMenu m = new GenericMenu();
-            m.AddItem(new GUIContent("Add from Template"), false, () => { });
+            m.AddItem(new GUIContent("Add System from Template... (T)"), false, OpenAddCreateWindowScreenCenter);
+            m.AddSeparator("");
+            m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach);
             m.ShowAsContext();
         }
     }
