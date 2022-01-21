@@ -12,5 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed42d288a7f2b824ea6b88fd68cf6e72, type: 3}
   m_Name: Practical Templates
   m_EditorClassIdentifier: 
-  categoryName: 
-  templates: []
+  categoryName: Practical templates
+  templates:
+  - templateAsset: {fileID: 8926484042661614526, guid: 0d7eb43ff838777409d8a5da9935e916, type: 3}
+    preview: {fileID: 0}
+    name: Fire
+    description: Simple Upping Flames that cool down to smoke.
+  - templateAsset: {fileID: 8926484042661614526, guid: 596aea19466dfe941bc1411950e10086, type: 3}
+    preview: {fileID: 0}
+    name: Smoke
+    description: A simple smoke column
+  - templateAsset: {fileID: 8926484042661614526, guid: 51b59d82d25655b408a9b4da377e49d0, type: 3}
+    preview: {fileID: 0}
+    name: Steam
+    description: A simple column of steam
+  - templateAsset: {fileID: 8926484042661614526, guid: e966e762ffd2da946b3c98dcb10bc043, type: 3}
+    preview: {fileID: 0}
+    name: Fire Sparkles
+    description: A flux of continuous upping fire sparkles
+  - templateAsset: {fileID: 8926484042661614526, guid: 34ac5dd4bbfdd7a46ad147ba71212f76, type: 3}
+    preview: {fileID: 0}
+    name: Sparkle Burst
+    description: Bursts of Sparkles projected along the X axis periodically
