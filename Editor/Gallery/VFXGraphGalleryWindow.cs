@@ -127,11 +127,13 @@ namespace UnityEditor.VFX
                     foreach(var category in categories)
                     {
                         // Group
+                        GUILayout.Space(4);
                         using(new GUILayout.HorizontalScope(EditorStyles.toolbar, GUILayout.ExpandWidth(true)))
                         {
                             GUILayout.Label(string.IsNullOrEmpty(category.categoryName) ? category.name : category.categoryName, Styles.midLabel);
                             GUILayout.FlexibleSpace();
                         }
+                        GUILayout.Space(4);
 
                         int i = 0;
                         foreach (var t in category.templates)
@@ -208,7 +210,7 @@ namespace UnityEditor.VFX
                 {
 
                     GUILayout.Space(8);
-                    createGameObject = GUILayout.Toggle(createGameObject, "Create Game Object");
+                    createGameObject = GUILayout.Toggle(createGameObject, "Create Game Object & Attach");
 
                     GUILayout.FlexibleSpace();
 
@@ -372,7 +374,7 @@ namespace UnityEditor.VFX
                 bigLabel.fontSize = 18;
 
                 midLabel = new GUIStyle(EditorStyles.boldLabel);
-                midLabel.fontSize = 12;
+                midLabel.fontSize = 16;
 
                 rightLabel = new GUIStyle(EditorStyles.label);
                 rightLabel.alignment = TextAnchor.MiddleRight;
