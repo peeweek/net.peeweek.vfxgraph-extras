@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed42d288a7f2b824ea6b88fd68cf6e72, type: 3}
+  m_Name: Practical Templates
+  m_EditorClassIdentifier: 
+  categoryName: Practical templates
+  templates:
+  - templateAsset: {fileID: 8926484042661614526, guid: 0d7eb43ff838777409d8a5da9935e916, type: 3}
+    preview: {fileID: 2800000, guid: a1f76ee25aa7b694a8d5242767ed48ad, type: 3}
+    name: Fire
+    description: Simple Upping Flames that cool down to smoke.
+  - templateAsset: {fileID: 8926484042661614526, guid: 596aea19466dfe941bc1411950e10086, type: 3}
+    preview: {fileID: 2800000, guid: 6de57f0765b52974fa527049a916d3ce, type: 3}
+    name: Smoke
+    description: A simple smoke column
+  - templateAsset: {fileID: 8926484042661614526, guid: 51b59d82d25655b408a9b4da377e49d0, type: 3}
+    preview: {fileID: 2800000, guid: d780e9a91da5aed4385827f065902e98, type: 3}
+    name: Steam
+    description: A simple column of steam
+  - templateAsset: {fileID: 8926484042661614526, guid: e966e762ffd2da946b3c98dcb10bc043, type: 3}
+    preview: {fileID: 2800000, guid: 6f3c9cfc0bb5e4040a918adf2895a807, type: 3}
+    name: Fire Sparkles
+    description: A flux of continuous upping fire sparkles
+  - templateAsset: {fileID: 8926484042661614526, guid: 34ac5dd4bbfdd7a46ad147ba71212f76, type: 3}
+    preview: {fileID: 2800000, guid: a1b5d0ec45f55814da53e062e12a80f3, type: 3}
+    name: Sparkle Burst
+    description: Bursts of Sparkles projected along the X axis periodically
+  - templateAsset: {fileID: 8926484042661614526, guid: e2909a2c601ef1c498aff6bd43296d97, type: 3}
+    preview: {fileID: 2800000, guid: 43ba85f432c6d7b48bae09da10e96be0, type: 3}
+    name: Floating Dust
+    description: Small Specks of dust floating around. These are simulated within
+      a volume that can tile around infinitely.

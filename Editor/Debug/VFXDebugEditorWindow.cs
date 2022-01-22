@@ -107,9 +107,9 @@ namespace UnityEngine.VFX.DebugTools
 
             float ms = 16.6f;
 
-            using (new GUILayout.HorizontalScope(Styles.header, GUILayout.Height(64)))
+            using (new GUILayout.HorizontalScope(Styles.header, GUILayout.Height(40)))
             {
-                GUILayout.Box(Contents.VFXIcon, EditorStyles.label, GUILayout.Height(64));
+                GUILayout.Box(Contents.VFXIcon, EditorStyles.label, GUILayout.Height(40), GUILayout.Width(40));
                 using (new GUILayout.VerticalScope())
                 {
                     GUILayout.Label(Contents.Cache("VFXGraph Scene Debug"), Styles.bigLabel);
@@ -118,7 +118,7 @@ namespace UnityEngine.VFX.DebugTools
                 GUILayout.FlexibleSpace();
                 using (new GUILayout.VerticalScope())
                 {
-                    GUILayout.Label($"FPS: {ms.ToString("F2")}ms", Styles.rightLabel);
+                    GUILayout.Label($"", Styles.rightLabel);
                     GUILayout.FlexibleSpace();
                 }
             }
