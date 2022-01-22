@@ -94,8 +94,10 @@ static class VFXGraphExtension
             Add(label);
 
             var button = new Button(OnClick);
-            button.text = "=";
-            
+            button.text = "▼";
+            button.style.fontSize = 10;
+            button.style.width = 24;
+            button.style.height = 16;
             Add(button);
         }
 
