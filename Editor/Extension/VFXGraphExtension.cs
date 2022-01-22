@@ -1,4 +1,4 @@
-using UnityEditor.VFX.UI;
+﻿using UnityEditor.VFX.UI;
 using UnityEditor;
 using UnityEngine.UIElements;
 using UnityEditor.Experimental.GraphView;
@@ -94,7 +94,7 @@ static class VFXGraphExtension
             Add(label);
 
             var button = new Button(OnClick);
-            button.text = "...";
+            button.text = "=";
             
             Add(button);
         }
@@ -102,10 +102,20 @@ static class VFXGraphExtension
         void OnClick()
         {
             GenericMenu m = new GenericMenu();
-            m.AddItem(new GUIContent("Add System from Template... (T)"), false, OpenAddCreateWindowScreenCenter);
-            m.AddSeparator("");
-            m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach);
-            m.ShowAsContext();
+            if(VFXViewWindow.currentWindow.graphView.controller == null) // No Asset
+            {
+                // WIP : No Asset Menu
+                m.AddItem(new GUIContent("No Asset"), false, null);
+                m.ShowAsContext();
+            }
+            else
+            {
+                m.AddItem(new GUIContent("Add System from Template... (T)"), false, OpenAddCreateWindowScreenCenter);
+                m.AddSeparator("");
+                m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach);
+                m.ShowAsContext();
+            }
+
         }
     }
 
