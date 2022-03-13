@@ -38,6 +38,28 @@ namespace UnityEditor.VFX
                 testsRList.onRemoveCallback = OnTestRemove;
                 testsRList.onSelectCallback = OnTestSelect;
             }
+
+            EditorApplication.update += TesterUpdate;
+        }
+
+        private void OnDisable()
+        {
+            EditorApplication.update -= TesterUpdate;
+        }
+
+        void TesterUpdate()
+        {
+            if (visualEffect == null)
+                return;
+
+            foreach(var test in tests)
+            {
+                if (!test.enabled)
+                    continue;
+
+                test.UpdateTest(visualEffect);
+
+            }
         }
 
         void OnDrawHeader(Rect r)
@@ -47,6 +69,14 @@ namespace UnityEditor.VFX
 
         void OnDrawElement(Rect rect, int index, bool isActive, bool isFocused)
         {
+            rect.yMin += 2;
+            rect.height = 18;
+
+            var b = rect;
+            b.width = 24;
+            tests[index].enabled = GUI.Toggle(b, tests[index].enabled, string.Empty);
+
+            rect.xMin += 24;
             tests[index] = (VFXEventTest)EditorGUI.ObjectField(rect, tests[index], typeof(VFXEventTest), false);
         }
 

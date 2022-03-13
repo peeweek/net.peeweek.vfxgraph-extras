@@ -35,7 +35,16 @@ namespace UnityEditor.VFX
             var item = rlist.serializedProperty.GetArrayElementAtIndex(index);
             if (item != null)
             {
-                GUI.Label(rect, item.displayName);
+                Rect b = rect;
+                b.width = 24;
+                EditorGUI.BeginChangeCheck();
+                var enabledProp = item.FindPropertyRelative("enabled");
+                bool enabled = GUI.Toggle(b, enabledProp.boolValue, string.Empty);
+                if (EditorGUI.EndChangeCheck())
+                    enabledProp.boolValue = enabled;
+
+                rect.xMin += 24;
+                GUI.Label(rect, item.FindPropertyRelative("name").stringValue);
             }
             else
                 GUI.Label(rect, "NULL");
@@ -90,6 +99,7 @@ namespace UnityEditor.VFX
             Type t = o as Type;
             Undo.RecordObject(serializedObject.targetObject, "Add Attribute");
             var attrib = Activator.CreateInstance(t) as VFXEventTest.EventAttributeSetup;
+            attrib.name = t.Name;
             if(attrib != null)
                 (serializedObject.targetObject as VFXEventTest).eventAttributes.Add(attrib);
         }
