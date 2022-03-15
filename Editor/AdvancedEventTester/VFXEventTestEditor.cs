@@ -49,7 +49,7 @@ namespace UnityEditor.VFX
                     enabledProp.boolValue = enabled;
 
                 rect.xMin += 24;
-                GUI.Label(rect, item.FindPropertyRelative("name").stringValue);
+                GUI.Label(rect, ObjectNames.NicifyVariableName(item.FindPropertyRelative("name").stringValue));
             }
             else
                 GUI.Label(rect, "NULL");
@@ -95,7 +95,7 @@ namespace UnityEditor.VFX
             foreach (var type in s_Types)
             {
                 string name = type.Name;
-                m_Menu.AddItem(new GUIContent(name), false, AddAttribute, type);
+                m_Menu.AddItem(new GUIContent(ObjectNames.NicifyVariableName(name)), false, AddAttribute, type);
             }
         }
 
@@ -121,13 +121,12 @@ namespace UnityEditor.VFX
             EditorGUILayout.PropertyField(eventName);
             EditorGUILayout.PropertyField(periodicity);
 
-
             rlist.DoLayoutList();
 
             if(rlist.index != -1)
             {
                 var prop = eventAttributes.GetArrayElementAtIndex(rlist.index);
-                //EditorGUILayout.PropertyField(prop, true);
+                
                 prop.NextVisible(true);
                 while(prop.NextVisible(false))
                 {
