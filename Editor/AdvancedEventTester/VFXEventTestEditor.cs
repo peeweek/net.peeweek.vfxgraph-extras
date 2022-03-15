@@ -25,9 +25,14 @@ namespace UnityEditor.VFX
             eventAttributes = serializedObject.FindProperty("eventAttributes");
 
             rlist = new ReorderableList(serializedObject, eventAttributes);
+            rlist.drawHeaderCallback += RList_Header;
             rlist.onAddCallback += RList_AddItem;
             rlist.drawElementCallback += RList_DrawElement;
             BuildMenu();
+        }
+        void RList_Header(Rect rect)
+        {
+            GUI.Label(rect, "Event Attributes", EditorStyles.boldLabel);
         }
 
         void RList_DrawElement(Rect rect, int index, bool isActive, bool isFocused)
@@ -121,7 +126,13 @@ namespace UnityEditor.VFX
 
             if(rlist.index != -1)
             {
-                EditorGUILayout.PropertyField(eventAttributes.GetArrayElementAtIndex(rlist.index), true);
+                var prop = eventAttributes.GetArrayElementAtIndex(rlist.index);
+                //EditorGUILayout.PropertyField(prop, true);
+                prop.NextVisible(true);
+                while(prop.NextVisible(false))
+                {
+                    EditorGUILayout.PropertyField(prop, true);
+                }
             }
 
             serializedObject.ApplyModifiedProperties();

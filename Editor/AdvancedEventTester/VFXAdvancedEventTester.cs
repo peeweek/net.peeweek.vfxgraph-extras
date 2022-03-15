@@ -54,7 +54,7 @@ namespace UnityEditor.VFX
 
             foreach(var test in tests)
             {
-                if (!test.enabled)
+                if (test == null || !test.enabled)
                     continue;
 
                 test.UpdateTest(visualEffect);
@@ -64,7 +64,7 @@ namespace UnityEditor.VFX
 
         void OnDrawHeader(Rect r)
         {
-            GUI.Label(r, "Events");
+            GUI.Label(r, "Event Setup", EditorStyles.boldLabel);
         }
 
         void OnDrawElement(Rect rect, int index, bool isActive, bool isFocused)
@@ -74,10 +74,21 @@ namespace UnityEditor.VFX
 
             var b = rect;
             b.width = 24;
-            tests[index].enabled = GUI.Toggle(b, tests[index].enabled, string.Empty);
+
+            if (tests[index] == null)
+            {
+                EditorGUI.BeginDisabledGroup(true);
+                GUI.Toggle(b, false, string.Empty);
+                EditorGUI.EndDisabledGroup();
+            }
+            else
+            {
+                tests[index].enabled = GUI.Toggle(b, tests[index].enabled, string.Empty);
+            }
 
             rect.xMin += 24;
             tests[index] = (VFXEventTest)EditorGUI.ObjectField(rect, tests[index], typeof(VFXEventTest), false);
+
         }
 
         void OnTestAdd(ReorderableList l) 
@@ -99,7 +110,6 @@ namespace UnityEditor.VFX
             if (tests[l.index] == null)
                 return;
 
-            Selection.activeObject = tests[l.index];
         }
 
         private void OnSelectionChange()
@@ -113,6 +123,9 @@ namespace UnityEditor.VFX
 
         private void OnGUI()
         {
+            if (visualEffect == null)
+                lockSelection = false;
+
             GUILayout.Label("Visual Effect", EditorStyles.boldLabel);
             using (new GUILayout.HorizontalScope())
             {
@@ -160,14 +173,24 @@ namespace UnityEditor.VFX
                 }
 
             }
-            GUILayout.Space(16);
-
-            GUILayout.Label("Event Setup", EditorStyles.boldLabel);
+            EditorGUILayout.Space();
 
             testsRList.DoLayoutList();
 
+            if(testsRList.index != -1 && tests[testsRList.index] != null)
+            {
+                EditorGUILayout.Space();
+                Editor.CreateCachedEditor(tests[testsRList.index], null, ref m_EvtEditor);
+                m_EvtEditor.DrawHeader();
+                EditorGUI.indentLevel ++;
+                m_EvtEditor.OnInspectorGUI();
+                EditorGUI.indentLevel --;
+            }
+
             EditorGUI.EndDisabledGroup();
         }
+
+        Editor m_EvtEditor;
     }
 }
 
