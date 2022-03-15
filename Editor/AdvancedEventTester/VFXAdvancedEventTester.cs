@@ -1,4 +1,4 @@
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 using UnityEngine.VFX;
 using UnityEditorInternal;
@@ -23,9 +23,16 @@ namespace UnityEditor.VFX
             GetWindow<VFXAdvancedEventTester>();
         }
 
+        Texture m_Icon;
+        GUIContent m_VFXIcon;
+
         private void OnEnable()
         {
-            titleContent = new GUIContent("VFX Advanced Event Tester");
+            m_Icon = EditorGUIUtility.IconContent("UnityEditor.ProfilerWindow").image;
+            m_VFXIcon = EditorGUIUtility.IconContent("VisualEffectAsset Icon");
+
+            titleContent = new GUIContent("VFX Advanced Event Tester", m_Icon);
+
             if (tests == null)
                 tests = new List<VFXEventTest>();
 
@@ -54,7 +61,7 @@ namespace UnityEditor.VFX
 
             foreach(var test in tests)
             {
-                if (test == null || !test.enabled)
+                if (test == null || !test.enableUpdate)
                     continue;
 
                 test.UpdateTest(visualEffect);
@@ -83,10 +90,16 @@ namespace UnityEditor.VFX
             }
             else
             {
-                tests[index].enabled = GUI.Toggle(b, tests[index].enabled, string.Empty);
+                tests[index].enableUpdate = GUI.Toggle(b, tests[index].enableUpdate, string.Empty);
             }
-
             rect.xMin += 24;
+            b = rect;
+            b.width = 24;
+
+            if (GUI.Button(b, "▶"))
+                tests[index].PerformEvent(visualEffect);
+
+            rect.xMin += 32;
             tests[index] = (VFXEventTest)EditorGUI.ObjectField(rect, tests[index], typeof(VFXEventTest), false);
 
         }
@@ -114,7 +127,9 @@ namespace UnityEditor.VFX
 
         private void OnSelectionChange()
         {
-            if(!lockSelection && Selection.activeGameObject.TryGetComponent(out VisualEffect vfx))
+            if( !lockSelection 
+                && Selection.activeGameObject != null 
+                && Selection.activeGameObject.TryGetComponent(out VisualEffect vfx))
             {
                 visualEffect = vfx;
                 Repaint();
@@ -126,7 +141,14 @@ namespace UnityEditor.VFX
             if (visualEffect == null)
                 lockSelection = false;
 
-            GUILayout.Label("Visual Effect", EditorStyles.boldLabel);
+            EditorGUILayout.Space();
+            using (new GUILayout.HorizontalScope(GUILayout.Height(32)))
+            {
+                Rect r = GUILayoutUtility.GetRect(32, 32, GUILayout.Width(32));
+                GUI.Label(r, m_VFXIcon);
+                GUILayout.Label("VFX Advanced Event Tester", Styles.title);
+            }
+
             using (new GUILayout.HorizontalScope())
             {
                 EditorGUI.BeginDisabledGroup(lockSelection);
@@ -134,6 +156,8 @@ namespace UnityEditor.VFX
                 EditorGUI.EndDisabledGroup();
                 lockSelection = GUILayout.Toggle(lockSelection, EditorGUIUtility.IconContent("InspectorLock"), EditorStyles.miniButton, GUILayout.Width(32));
             }
+            EditorGUILayout.Space();
+
             EditorGUI.BeginDisabledGroup(visualEffect == null);
             using(new GUILayout.HorizontalScope())
             {
@@ -191,6 +215,16 @@ namespace UnityEditor.VFX
         }
 
         Editor m_EvtEditor;
+
+        static class Styles
+        {
+            public static GUIStyle title;
+            static Styles()
+            {
+                title = new GUIStyle(EditorStyles.boldLabel);
+                title.fontSize = 18;
+            }
+        }
     }
 }
 
