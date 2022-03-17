@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,26 +10,28 @@ namespace UnityEditor.VFX
     [CustomEditor(typeof(VFXEventTest))]
     public class VFXEventTestEditor : Editor
     {
-        SerializedProperty enabled;
         SerializedProperty eventName;
-        SerializedProperty periodicity;
         SerializedProperty eventAttributes;
+        SerializedProperty updateBehavior;
 
         ReorderableList rlist;
 
         private void OnEnable()
         {
-            enabled = serializedObject.FindProperty("enabled");
             eventName = serializedObject.FindProperty("eventName");
-            periodicity = serializedObject.FindProperty("periodicity");
+            updateBehavior = serializedObject.FindProperty("updateBehavior");
+
             eventAttributes = serializedObject.FindProperty("eventAttributes");
 
-            rlist = new ReorderableList(serializedObject, eventAttributes);
+            rlist = new ReorderableList(serializedObject, eventAttributes, true, false, true, true);
             rlist.drawHeaderCallback += RList_Header;
             rlist.onAddCallback += RList_AddItem;
             rlist.drawElementCallback += RList_DrawElement;
-            BuildMenu();
+
+            BuildAttributeMenu();
+            BuildBehaviorMenu();
         }
+
         void RList_Header(Rect rect)
         {
             GUI.Label(rect, "Event Attributes", EditorStyles.boldLabel);
@@ -44,7 +46,7 @@ namespace UnityEditor.VFX
                 b.width = 24;
                 EditorGUI.BeginChangeCheck();
                 var enabledProp = item.FindPropertyRelative("enabled");
-                bool enabled = GUI.Toggle(b, enabledProp.boolValue, string.Empty);
+                bool enabled = GUI.Toggle(b, enabledProp.boolValue, GUIContent.none);
                 if (EditorGUI.EndChangeCheck())
                     enabledProp.boolValue = enabled;
 
@@ -58,11 +60,13 @@ namespace UnityEditor.VFX
 
         void RList_AddItem(ReorderableList l)
         {
-            m_Menu.ShowAsContext();
+            m_AttributeMenu.ShowAsContext();
         }
 
-        GenericMenu m_Menu;
-        static Type[] s_Types;
+        GenericMenu m_AttributeMenu;
+        GenericMenu m_BehaviorMenu;
+        static Type[] s_AttributeTypes;
+        static Type[] s_BehaviorTypes;
 
         public static IEnumerable<Type> FindConcreteSubclasses(Type objectType = null)
         {
@@ -86,16 +90,29 @@ namespace UnityEditor.VFX
             return types;
         }
 
-        public void BuildMenu()
+        public void BuildAttributeMenu()
         {
-            m_Menu = new GenericMenu();
-            if (s_Types == null)
-                s_Types = FindConcreteSubclasses(typeof(VFXEventTest.EventAttributeSetup)).ToArray();
+            m_AttributeMenu = new GenericMenu();
+            if (s_AttributeTypes == null)
+                s_AttributeTypes = FindConcreteSubclasses(typeof(EventAttributeSetup)).ToArray();
 
-            foreach (var type in s_Types)
+            foreach (var type in s_AttributeTypes)
             {
                 string name = type.Name;
-                m_Menu.AddItem(new GUIContent(ObjectNames.NicifyVariableName(name)), false, AddAttribute, type);
+                m_AttributeMenu.AddItem(new GUIContent(ObjectNames.NicifyVariableName(name)), false, AddAttribute, type);
+            }
+        }
+
+        public void BuildBehaviorMenu()
+        {
+            m_BehaviorMenu = new GenericMenu();
+            if (s_BehaviorTypes == null)
+                s_BehaviorTypes = FindConcreteSubclasses(typeof(EventTestUpdateBehavior)).ToArray();
+
+            foreach (var type in s_BehaviorTypes)
+            {
+                string name = type.Name;
+                m_BehaviorMenu.AddItem(new GUIContent(ObjectNames.NicifyVariableName(name)), false, SetUpdateBehavior, type);
             }
         }
 
@@ -103,38 +120,110 @@ namespace UnityEditor.VFX
         {
             Type t = o as Type;
             Undo.RecordObject(serializedObject.targetObject, "Add Attribute");
-            var attrib = Activator.CreateInstance(t) as VFXEventTest.EventAttributeSetup;
+            var attrib = Activator.CreateInstance(t) as EventAttributeSetup;
             attrib.name = t.Name;
             if(attrib != null)
                 (serializedObject.targetObject as VFXEventTest).eventAttributes.Add(attrib);
         }
 
-        private void OnDisable()
+        void SetUpdateBehavior(object o)
         {
+            Type t = o as Type;
+            Undo.RecordObject(serializedObject.targetObject, "Set Update Behavior");
+            var bh = Activator.CreateInstance(t) as EventTestUpdateBehavior;
             
+            if (bh != null)
+                (serializedObject.targetObject as VFXEventTest).updateBehavior = bh;
         }
+
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            EditorGUILayout.PropertyField(enabled);
             EditorGUILayout.PropertyField(eventName);
-            EditorGUILayout.PropertyField(periodicity);
+
+            var testTarget = serializedObject.targetObject as VFXEventTest;
+
+            using (new GUILayout.HorizontalScope(Styles.header))
+            {
+                GUILayout.Label("Update Behavior", Styles.headerLabel);
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("...", EditorStyles.miniButton, GUILayout.Width(24), GUILayout.Height(22)))
+                {
+                    m_BehaviorMenu.ShowAsContext();
+                }
+            }
+
+            using (new GUILayout.VerticalScope())
+            {
+                EditorGUI.BeginDisabledGroup(testTarget.updateBehavior == null);
+                updateBehavior = serializedObject.FindProperty("updateBehavior");
+                DrawItemPropertyWithoutFoldout(updateBehavior);
+                EditorGUI.EndDisabledGroup();
+
+            }
+
+            using (new GUILayout.HorizontalScope(Styles.header))
+            {
+                GUILayout.Label("Event Attributes", Styles.headerLabel);
+                GUILayout.FlexibleSpace();
+            }
 
             rlist.DoLayoutList();
 
             if(rlist.index != -1)
             {
+
                 var prop = eventAttributes.GetArrayElementAtIndex(rlist.index);
-                
-                prop.NextVisible(true);
-                while(prop.NextVisible(false))
+
+                using (new GUILayout.VerticalScope(Styles.header, GUILayout.Height(24)))
                 {
-                    EditorGUILayout.PropertyField(prop, true);
+                    GUILayout.Label(prop.displayName, Styles.headerLabel);
                 }
+
+                DrawItemPropertyWithoutFoldout(prop);
+
             }
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        void DrawItemPropertyWithoutFoldout(SerializedProperty prop)
+        {
+            var path = prop.propertyPath;
+
+            if(prop.hasChildren)
+            {
+                prop.NextVisible(true);
+            }
+
+            EditorGUILayout.PropertyField(prop, true);
+
+            while (prop.NextVisible(false) && prop.propertyPath.Contains(path))
+            {
+                EditorGUILayout.PropertyField(prop, true);
+            }
+        }
+
+        static class Styles
+        {
+            public static GUIStyle header;
+            public static GUIStyle headerLabel;
+
+            static Styles()
+            {
+                header = new GUIStyle("ShurikenModuleTitle");
+                header.fontSize = 13;
+                header.fontStyle = FontStyle.Bold;
+                header.border = new RectOffset(15, 7, 4, 4);
+                header.margin = new RectOffset(0, 0, 16, 0);
+                header.fixedHeight = 24;
+                header.contentOffset = new Vector2(32f, -2f);
+
+                headerLabel = new GUIStyle(EditorStyles.boldLabel);
+                headerLabel.fontSize = 13;
+                headerLabel.alignment = TextAnchor.MiddleLeft;
+            }
         }
     }
 }
