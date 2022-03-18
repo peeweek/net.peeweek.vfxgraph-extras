@@ -275,7 +275,6 @@ namespace UnityEditor.VFX.Block
             {
                 if (GUILayout.Button("Apply"))
                 {
-                    // TODO: load here the source code (as string) from the specified file
                     SourceCode.stringValue = source;
                     Apply();
                 }
