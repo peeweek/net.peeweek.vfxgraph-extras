@@ -14,9 +14,6 @@ namespace UnityEditor.VFX
         bool lockSelection;
 
         [SerializeField]
-        bool LockTool;
-
-        [SerializeField]
         List<VFXEventTest> tests;
         ReorderableList testsRList;
 
@@ -50,24 +47,65 @@ namespace UnityEditor.VFX
             }
 
             EditorApplication.update += TesterUpdate;
-            SceneView.duringSceneGui += ToolUpdate;
+            SceneView.beforeSceneGui += ToolBeforeSceneUpdate;
+            SceneView.duringSceneGui += ToolDuringSceneUpdate;
         }
 
         private void OnDisable()
         {
             EditorApplication.update -= TesterUpdate;
-            SceneView.duringSceneGui -= ToolUpdate;
+            SceneView.beforeSceneGui -= ToolBeforeSceneUpdate;
+            SceneView.duringSceneGui -= ToolDuringSceneUpdate;
         }
 
-        void ToolUpdate(SceneView sceneView)
+        void ToolBeforeSceneUpdate(SceneView sceneView)
         {
-            if (!LockTool || Event.current.alt)
+            if (Event.current.alt || Event.current.type == EventType.Layout || Event.current.type == EventType.Repaint)
                 return;
 
-            Selection.activeGameObject = null;
 
+            bool used = false;
+            foreach(var test in tests)
+            {
+                if (test.updateBehavior == null && !test.updateBehavior.canUseTool)
+                    continue;
+
+                if(test.updateBehavior.enableUpdate)
+                    used = used || test.updateBehavior.OnBeforeSceneGUI(sceneView, Event.current);
+            }
+            
+            if(used)
+            {
+                Selection.activeGameObject = null;
+                Event.current.Use();
+            }
+        }
+
+        void ToolDuringSceneUpdate(SceneView sceneView)
+        {
+            if (Event.current.alt)
+                return;
+
+            
+
+            bool used = false;
+            foreach (var test in tests)
+            {
+                if (test.updateBehavior == null && !test.updateBehavior.canUseTool)
+                    continue;
+
+                if (test.updateBehavior.enableUpdate)
+                    used = used || test.updateBehavior.OnDuringSceneGUI(sceneView, Event.current);
+            }
+
+            if (used)
+            {
+                Selection.activeGameObject = null;
+                Event.current.Use();
+            }
 
         }
+
 
         void TesterUpdate()
         {
@@ -80,7 +118,6 @@ namespace UnityEditor.VFX
                     continue;
 
                 test.UpdateTest(visualEffect);
-
             }
         }
 
@@ -105,7 +142,12 @@ namespace UnityEditor.VFX
             }
             else
             {
+                EditorGUI.BeginChangeCheck();
                 tests[index].updateBehavior.enableUpdate = GUI.Toggle(b, tests[index].updateBehavior.enableUpdate, Contents.Refresh, EditorStyles.miniButton);
+                if(EditorGUI.EndChangeCheck() && tests[index].updateBehavior.enableUpdate)
+                {
+                    tests[index].ResetTest(visualEffect);
+                }
             }
             rect.xMin += 32;
             b = rect;
@@ -155,11 +197,12 @@ namespace UnityEditor.VFX
         {
             if (visualEffect == null)
                 lockSelection = false;
+            Rect r;
 
             EditorGUILayout.Space();
             using (new GUILayout.HorizontalScope(GUILayout.Height(32)))
             {
-                Rect r = GUILayoutUtility.GetRect(32, 32, GUILayout.Width(32));
+                r = GUILayoutUtility.GetRect(32, 32, GUILayout.Width(32));
                 GUI.Label(r, m_VFXIcon);
                 GUILayout.Label("VFX Advanced Event Tester", Styles.title);
             }
@@ -172,12 +215,12 @@ namespace UnityEditor.VFX
                 lockSelection = GUILayout.Toggle(lockSelection, EditorGUIUtility.IconContent("InspectorLock"), EditorStyles.miniButton, GUILayout.Width(32));
             }
             EditorGUILayout.Space();
-            EditorGUI.BeginChangeCheck();
-            LockTool = GUILayout.Toggle(LockTool, new GUIContent("Tool"), EditorStyles.miniButton);
-            if (EditorGUI.EndChangeCheck())
-                Tools.current = LockTool ? Tool.None : Tool.Transform;
-            EditorGUILayout.Space();
 
+            r = GUILayoutUtility.GetLastRect();
+            r.yMin += 4;
+            r.height = 1;
+            EditorGUI.DrawRect(r, new Color(0, 0, 0, 0.5f));
+            EditorGUILayout.Space();
             EditorGUI.BeginDisabledGroup(visualEffect == null);
             using(new GUILayout.HorizontalScope())
             {

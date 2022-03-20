@@ -24,9 +24,10 @@ namespace UnityEditor.VFX
             updateBehavior = new ConstantRateBehavior();
         }
 
-        public void PerformEvent(VisualEffect vfx)
+        public void PerformEvent(VisualEffect vfx, VFXEventAttribute attribute = null)
         {
-            attribute = vfx.CreateVFXEventAttribute();
+            if(attribute == null)
+                attribute = vfx.CreateVFXEventAttribute();
 
             foreach (var evtAttr in eventAttributes)
             {

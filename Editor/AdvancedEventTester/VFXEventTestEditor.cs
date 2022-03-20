@@ -48,7 +48,9 @@ namespace UnityEditor.VFX
                 var enabledProp = item.FindPropertyRelative("enabled");
                 bool enabled = GUI.Toggle(b, enabledProp.boolValue, GUIContent.none);
                 if (EditorGUI.EndChangeCheck())
+                {
                     enabledProp.boolValue = enabled;
+                }
 
                 rect.xMin += 24;
                 GUI.Label(rect, ObjectNames.NicifyVariableName(item.FindPropertyRelative("name").stringValue));
