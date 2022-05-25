@@ -22,6 +22,7 @@ namespace UnityEngine.VFX.DebugTools
             public GameObject gameObject => component.gameObject;
             public VisualEffectAsset asset => component.visualEffectAsset;
 
+
             // Validity Check, should be performed at least once each frame before accessing API
             public bool valid => component != null && gameObject != null && asset != null && renderer != null;
 

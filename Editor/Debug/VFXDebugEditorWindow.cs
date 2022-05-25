@@ -305,6 +305,9 @@ namespace UnityEngine.VFX.DebugTools
                     if (GUI.Button(r, entry.rendered ? Contents.rendererOnIcon : Contents.rendererOffIcon, EditorStyles.toolbarButton))
                         entry.ToggleRendered();
 
+                    r.xMin = r.xMax; r.width = 32;
+                    if (GUI.Button(r, IsShowAdvanced(entry.component)? "(-)" : "(+)", EditorStyles.toolbarButton))
+                        ToggleShowAdvanced(entry.component);
 
                     float m = r.xMax;
 
@@ -326,16 +329,75 @@ namespace UnityEngine.VFX.DebugTools
                             VFXViewWindow.currentWindow.LoadAsset(entry.asset, entry.component);
                         }
                     }
+                }
+                if (IsShowAdvanced(entry.component))
+                {
+                    if (systemNames == null)
+                        systemNames = new List<string>();
+
+                    entry.component.GetParticleSystemNames(systemNames);
+                    foreach (var s in systemNames)
+                    {
+                        line = GUILayoutUtility.GetRect(Contents.none, EditorStyles.toolbar, GUILayout.ExpandWidth(true));
+                        {
+                            var info = entry.component.GetParticleSystemInfo(s);
+                            Rect r = line;
+                            r.xMin = 64;
+                            r.width = 128;
+                            GUI.Label(r, s, Styles.toolbarButton);
+
+
+                            r.xMin = r.xMax; r.width = 200;
+                            float t = (float)info.aliveCount / info.capacity;
+                            Rect p = r;
+                            p.width = r.width * Mathf.Lerp(.05f, 1f, t);
+
+                            Color c = Styles.green;
+                            if (t < 0.1f)
+                                c = Styles.red;
+                            else if (t < 0.5f)
+                                c = Styles.orange;
+
+                            EditorGUI.DrawRect(p, c);
+                            GUI.Label(r,$"{info.aliveCount}/{info.capacity}", Styles.centerLabel);
+
+                            r.xMin = r.xMax; r.width = 120;
+                            GUI.Label(r, info.sleeping? "Sleeping" : "Not Sleeping", Styles.toolbarButtonBold);
+
+                        }
+                    }
 
                 }
                 Profiler.EndSample();
+
+                
+
             }
 
             GUILayout.Space(80);
 
             EditorGUILayout.EndScrollView();
+        }
+        List<string> systemNames;
 
+        List<VisualEffect> advanced;
+        bool IsShowAdvanced(VisualEffect vfx)
+        {
+            if (advanced == null)
+                advanced = new List<VisualEffect>();
 
+            return advanced.Contains(vfx);
+        }
+
+        void ToggleShowAdvanced(VisualEffect vfx)
+        {
+            if (advanced == null)
+                advanced = new List<VisualEffect>();
+
+            if (advanced.Contains(vfx))
+                advanced.Remove(vfx);
+            else
+                advanced.Add(vfx);
         }
 
         void Reload(bool deepSearch = false)
@@ -448,6 +510,10 @@ namespace UnityEngine.VFX.DebugTools
 
         class Styles
         {
+            public static Color green = new Color(0.1f, 0.5f, 0.0f);
+            public static Color orange = new Color(0.5f, 0.3f, 0.0f); 
+            public static Color red = new Color(0.5f, 0.0f, 0.1f);
+
             public static GUIStyle header;
 
             public static GUIStyle toolbarButton;
@@ -456,6 +522,7 @@ namespace UnityEngine.VFX.DebugTools
 
             public static GUIStyle bigLabel;
             public static GUIStyle rightLabel;
+            public static GUIStyle centerLabel;
 
             static Styles()
             {
@@ -477,7 +544,8 @@ namespace UnityEngine.VFX.DebugTools
 
                 rightLabel = new GUIStyle(EditorStyles.label);
                 rightLabel.alignment = TextAnchor.MiddleRight;
-
+                centerLabel = new GUIStyle(EditorStyles.label);
+                centerLabel.alignment = TextAnchor.MiddleCenter;
             }
         }
     }
