@@ -20,6 +20,42 @@ namespace UnityEngine.VFX.DebugTools
             } 
         }
 
+        public enum CameraMode
+        {
+            SceneView = 0,
+            MainCamera = 1
+        }
+
+        public enum ViewMode
+        {
+            Grouped = 0,
+            Sorted = 1
+        }
+
+        public enum SortMode
+        {
+            Name = 0,
+            CameraDistance = 1,
+            ParticleCount = 2
+        }
+
+        ViewMode viewMode
+        {
+            get => (ViewMode)EditorPrefs.GetInt("VFXDebug.viewMode", 0);
+            set => EditorPrefs.SetInt("VFXDebug.viewMode", (int)value);
+        }
+
+        SortMode sortMode
+        {
+            get => (SortMode)EditorPrefs.GetInt("VFXDebug.sortMode", 0);
+            set => EditorPrefs.SetInt("VFXDebug.sortMode", (int)value);
+        }
+        CameraMode cameraMode
+        {
+            get => (CameraMode)EditorPrefs.GetInt("VFXDebug.cameraMode", 0);
+            set => EditorPrefs.SetInt("VFXDebug.cameraMode", (int)value);
+        }
+
         bool groupByScene { 
             get => EditorPrefs.GetBool("VFXDebug.groupByScene", false);
             set => EditorPrefs.SetBool("VFXDebug.groupByScene", value);
@@ -128,9 +164,23 @@ namespace UnityEngine.VFX.DebugTools
             Profiler.BeginSample("VFXDebugWindow.DrawToolbar");
             using (new GUILayout.HorizontalScope(EditorStyles.toolbar))
             {
-                GUILayout.Label(Contents.Cache("Group By:"), Styles.toolbarButtonBold);
-                groupByScene = GUILayout.Toggle(groupByScene, Contents.Cache("Scene"), Styles.toolbarButton);
-                groupByAsset = GUILayout.Toggle(groupByAsset, Contents.Cache("Asset"), Styles.toolbarButton);
+                viewMode = (ViewMode)EditorGUILayout.EnumPopup(viewMode, Styles.popupBold, GUILayout.Width(90));
+                if(viewMode == ViewMode.Grouped)
+                {
+                    GUILayout.Label(Contents.Cache("By:"), Styles.toolbarButtonBold);
+                    groupByScene = GUILayout.Toggle(groupByScene, Contents.Cache("Scene"), Styles.toolbarButton);
+                    groupByAsset = GUILayout.Toggle(groupByAsset, Contents.Cache("Asset"), Styles.toolbarButton);
+                }
+                else if(viewMode == ViewMode.Sorted)
+                {
+                    GUILayout.Label(Contents.Cache("By:"), Styles.toolbarButtonBold);
+                    sortMode = (SortMode)EditorGUILayout.EnumPopup(sortMode, EditorStyles.toolbarPopup, GUILayout.Width(120));
+                }
+
+
+                GUILayout.Space(32);
+                GUILayout.Label(Contents.Cache("Camera:"), Styles.toolbarButtonBold);
+                cameraMode = (CameraMode)EditorGUILayout.EnumPopup(cameraMode, EditorStyles.toolbarPopup, GUILayout.Width(120));
 
                 GUILayout.Space(32);
 
@@ -160,7 +210,41 @@ namespace UnityEngine.VFX.DebugTools
             int i = 0;
 
             string currentScene = string.Empty;
+            Vector3 cameraPos = Vector3.zero;
+            switch (cameraMode)
+            {
+                case CameraMode.SceneView:
+                    cameraPos = SceneView.lastActiveSceneView.camera.transform.position;
+                    break;
+                case CameraMode.MainCamera:
+                    if (Camera.main != null)
+                        cameraPos = Camera.main.transform.position;
+                    else
+                        cameraPos = SceneView.lastActiveSceneView.camera.transform.position;
+                    break;
+                default:
+                    break;
+            }
             VisualEffectAsset currentAsset = null;
+
+            if(viewMode == ViewMode.Sorted)
+            {
+
+                switch (sortMode)
+                {
+                    case SortMode.Name:
+                        entries = entries.OrderBy(o => o.asset.name).ToList();
+                        break;
+                    case SortMode.CameraDistance:
+                        entries = entries.OrderBy(o => Vector3.SqrMagnitude(cameraPos - o.component.transform.position)).ToList();
+                        break;
+                    case SortMode.ParticleCount:
+                        entries = entries.OrderBy(o => o.component.aliveParticleCount).ToList();
+                        break;
+                    default:
+                        break;
+                }
+            }
 
             foreach (var entry in entries)
             {
@@ -175,7 +259,7 @@ namespace UnityEngine.VFX.DebugTools
 
                 Profiler.BeginSample("VFXDebugWindow.DrawSceneHeader");
                 // Display group header if new scene
-                if (groupByScene && currentScene != entry.sceneName)
+                if (viewMode == ViewMode.Grouped && groupByScene && currentScene != entry.sceneName)
                 {
                     currentScene = entry.sceneName;
                     GUI.backgroundColor = new Color(.6f, .6f, .6f, 1.0f);
@@ -194,7 +278,7 @@ namespace UnityEngine.VFX.DebugTools
 
                 Profiler.BeginSample("VFXDebugWindow.DrawAssetHeader");
                 // Display group header if new asset
-                if (groupByAsset && currentAsset != entry.asset)
+                if (viewMode == ViewMode.Grouped && groupByAsset && currentAsset != entry.asset)
                 {
                     currentAsset = entry.asset;
                     GUI.backgroundColor = new Color(.8f, .8f, .8f, 1.0f);
@@ -239,7 +323,7 @@ namespace UnityEngine.VFX.DebugTools
                 GUI.backgroundColor = new Color(f, f, f, 1.0f);
                 i++;
 
-                if (groupByAsset && Selection.activeObject == currentAsset)
+                if (viewMode == ViewMode.Grouped && groupByAsset && Selection.activeObject == currentAsset)
                     GUI.backgroundColor *= new Color(1.5f, 1.2f, 0.8f, 1.0f);
                 else if (Selection.activeGameObject == entry.gameObject)
                     GUI.backgroundColor = new Color(0.6f, 1.4f, 2.0f, 1.0f);
@@ -250,8 +334,8 @@ namespace UnityEngine.VFX.DebugTools
                 {
                     GUI.Box(line, Contents.none, EditorStyles.toolbarButton);
 
-                    if (groupByScene) line.xMin += 24;
-                    if (groupByAsset) line.xMin += 24;
+                    if (viewMode == ViewMode.Grouped && groupByScene) line.xMin += 24;
+                    if (viewMode == ViewMode.Grouped && groupByAsset) line.xMin += 24;
 
                     Rect r = line;
                     r.width = 24;
@@ -287,7 +371,7 @@ namespace UnityEngine.VFX.DebugTools
                     r.xMin = r.xMax; r.width = 80;
                     GUI.Label(r, entry.resetSeedOnPlay ? Contents.reseed : Contents.Seed(entry.seed), Styles.toolbarButton);
                     r.xMin = r.xMax; r.width = 80;
-                    GUI.Label(r, Vector3.Distance(SceneView.lastActiveSceneView.camera.transform.position, entry.position).ToString("F2"), Styles.toolbarButtonRight);
+                    GUI.Label(r, Vector3.Distance(cameraPos, entry.position).ToString("F2"), Styles.toolbarButtonRight);
 
                     r.xMin = r.xMax; r.width = 32;
                     if (GUI.Button(r, entry.paused ? Contents.pauseIcon : Contents.playIcon, EditorStyles.toolbarButton))
@@ -341,6 +425,7 @@ namespace UnityEngine.VFX.DebugTools
                         line = GUILayoutUtility.GetRect(Contents.none, EditorStyles.toolbar, GUILayout.ExpandWidth(true));
                         {
                             var info = entry.component.GetParticleSystemInfo(s);
+                            info = entry.component.GetParticleSystemInfo(Shader.PropertyToID(s));
                             Rect r = line;
                             r.xMin = 64;
                             r.width = 128;
@@ -519,6 +604,7 @@ namespace UnityEngine.VFX.DebugTools
             public static GUIStyle toolbarButton;
             public static GUIStyle toolbarButtonBold;
             public static GUIStyle toolbarButtonRight;
+            public static GUIStyle popupBold;
 
             public static GUIStyle bigLabel;
             public static GUIStyle rightLabel;
@@ -538,6 +624,9 @@ namespace UnityEngine.VFX.DebugTools
                 toolbarButtonBold = new GUIStyle(EditorStyles.toolbarButton);
                 toolbarButtonBold.alignment = TextAnchor.MiddleLeft;
                 toolbarButtonBold.fontStyle = FontStyle.Bold;
+
+                popupBold = new GUIStyle(EditorStyles.toolbarPopup);
+                popupBold.fontStyle = FontStyle.Bold;
                 
                 bigLabel = new GUIStyle(EditorStyles.boldLabel);
                 bigLabel.fontSize = 18;
