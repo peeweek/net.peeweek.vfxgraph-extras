@@ -8,6 +8,7 @@ using UnityEngine.VFX;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Profiling;
+using System.Text;
 
 static class VFXGraphExtension
 {
@@ -72,6 +73,7 @@ static class VFXGraphExtension
                 debugInfo.timeLabel.text = "";
                 debugInfo.timeLabel2.text = "";
                 debugInfo.progress.style.width = 0;
+                debugInfo.debugPanel.style.height = 140;
             }
             else
             {
@@ -145,6 +147,86 @@ on the stop input, or exhausting its loops";
 
                 }
                 debugInfo.label.text = text;
+
+                VFXEventAttribute eva = spawnerInfo.vfxEventAttribute;
+                StringBuilder sb = new StringBuilder();
+                int i = 0;
+
+                if (eva.HasFloat("spawnCount"))
+                {
+                    ++i;
+                    sb.AppendLine($"spawnCount : {(int)eva.GetFloat("spawnCount")}");
+                }
+
+                if (eva.HasVector3("position"))
+                {
+                    ++i;
+                    sb.AppendLine($"position: {eva.GetVector3("position")}");
+                }
+
+                if (eva.HasVector3("targetPosition"))
+                {
+                    ++i;
+                    sb.AppendLine($"targetPosition: {eva.GetVector3("targetPosition")}");
+                }
+
+                if (eva.HasVector3("oldPosition"))
+                {
+                    ++i;
+                    sb.AppendLine($"oldPosition: {eva.GetVector3("oldPosition")}");
+                }
+
+                if (eva.HasVector3("velocity"))
+                {
+                    ++i;
+                    sb.AppendLine($"velocity: {eva.GetVector3("velocity")}");
+                }
+
+                if (eva.HasFloat("size"))
+                {
+                    ++i;
+                    sb.AppendLine($"size: {eva.GetFloat("size")}");
+                }
+
+                if (eva.HasVector3("scale"))
+                {
+                    ++i;
+                    sb.AppendLine($"scale: {eva.GetVector3("scale")}");
+                }
+
+                if (eva.HasVector3("angle"))
+                {
+                    ++i;
+                    sb.AppendLine($"angle: {eva.GetVector3("angle")}");
+                }
+
+                if (eva.HasVector3("color"))
+                {
+                    ++i; 
+                    sb.AppendLine($"color: {eva.GetVector3("color")}");
+                }
+
+                if (eva.HasFloat("age"))
+                {
+                    ++i;
+                    sb.AppendLine($"age: {eva.GetFloat("age")}");
+                }
+
+                if (eva.HasFloat("lifetime"))
+                {
+                    ++i;
+                    sb.AppendLine($"lifetime: {eva.GetFloat("lifetime")}");
+                }
+
+                if(i == -1)
+                {
+                    sb.AppendLine("(No VFX Event Attributes)");
+                    i++;
+                }
+
+
+                debugInfo.evtAttribute.text = sb.ToString();
+                debugInfo.debugPanel.style.height = 140 + (i * 12);
             }
         }
 
@@ -190,6 +272,7 @@ on the stop input, or exhausting its loops";
         public Label timeLabel2;
         public VisualElement progress;
         public Label label;
+        public Label evtAttribute;
 
         public void ResyncName()
         {
@@ -253,7 +336,7 @@ on the stop input, or exhausting its loops";
                 panel.style.paddingRight = 8;
                 panel.style.paddingTop = 8;
                 panel.style.left = 432;
-                panel.style.height = 112;
+                panel.style.height = 180;
                 panel.style.width = 260;
                 panel.style.backgroundColor = new StyleColor(new Color(0.15f, 0.15f, 0.15f, 1.0f));
 
@@ -323,6 +406,17 @@ on the stop input, or exhausting its loops";
                 progress.style.borderTopLeftRadius = 3;
                 progress.style.borderTopRightRadius = 3;
 
+                var evtAttributeHeader = new Label("Event Attributes");
+                evtAttributeHeader.style.top = 90;
+                evtAttributeHeader.style.left = 3;
+                evtAttributeHeader.style.fontSize = 12;
+                evtAttributeHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+                var evtAttribute = new Label("(No Attributes)");
+                evtAttribute.style.top = 93;
+                evtAttribute.style.left = 3;
+                evtAttribute.style.fontSize = 12;
+
                 panel.Add(playLabel);
                 panel.Add(bigLabel);
                 panel.Add(timeLabel);
@@ -330,6 +424,8 @@ on the stop input, or exhausting its loops";
                 panel.Add(progressBG);
                 panel.Add(progress);
                 panel.Add(label);
+                panel.Add(evtAttributeHeader);
+                panel.Add(evtAttribute);
                 context.Add(panel);
 
                 info.ui = context;
@@ -340,7 +436,8 @@ on the stop input, or exhausting its loops";
                 info.playLabel = playLabel;
                 info.progress = progress;
                 info.debugPanel = panel;
-                
+                info.evtAttribute = evtAttribute;
+
                 spawnerDebugInfos.Add(info);
             }
 
