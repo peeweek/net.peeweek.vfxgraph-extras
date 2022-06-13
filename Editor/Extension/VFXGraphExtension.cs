@@ -10,7 +10,7 @@ using System.Linq;
 using UnityEngine.Profiling;
 using System.Text;
 
-static class VFXGraphExtension
+static partial class VFXGraphExtension
 {
     [InitializeOnLoadMethod]
     static void InitializeExtension()
@@ -40,6 +40,9 @@ static class VFXGraphExtension
         Profiler.BeginSample("VFXGraphExtension.UpdateDebugInfo");
         UpdateDebugInfo();
         Profiler.EndSample();
+
+        InitializeShortcuts(window);
+
     }
 
 
@@ -63,7 +66,7 @@ static class VFXGraphExtension
         {
             debugInfo.debugPanel.visible = spawnerDebugInfoVisible;
             if (!spawnerDebugInfoVisible)
-                return;
+                continue;
             
             if(vfx == null)
             {
@@ -238,12 +241,14 @@ on the stop input, or exhausting its loops";
 
     static void OnKeyDown(KeyDownEvent e)
     {
-        if(e.keyCode == KeyCode.T)
+        if(e.keyCode == KeyCode.Space && e.ctrlKey)
         {
             var wnd = VFXViewWindow.currentWindow;
             Vector2 pos = e.originalMousePosition;
             pos = wnd.graphView.ChangeCoordinatesTo(wnd.graphView.contentViewContainer, pos);
             OpenAddCreateWindow(pos);
+            e.StopPropagation();
+            e.StopImmediatePropagation();
         }
     }
 
@@ -282,6 +287,7 @@ on the stop input, or exhausting its loops";
             }
         }
     }
+
     static List<SpawnerDebugInfo> spawnerDebugInfos;
 
     static void ToggleSpawnerStats()
@@ -299,7 +305,6 @@ on the stop input, or exhausting its loops";
         var gv = wnd.graphView;
         if (gv == null)
             return;
-
 
         if (spawnerDebugInfos == null)
             spawnerDebugInfos = new List<SpawnerDebugInfo>();
@@ -441,10 +446,6 @@ on the stop input, or exhausting its loops";
                 spawnerDebugInfos.Add(info);
             }
 
-            info.debugPanel = panel;
-
-
-
         });
     }
 
@@ -502,11 +503,13 @@ on the stop input, or exhausting its loops";
             }
             else
             {
-                m.AddItem(new GUIContent("Add System from Template... (T)"), false, OpenAddCreateWindowScreenCenter);
+                m.AddItem(new GUIContent("Add System from Template... (Ctrl+Space)"), false, OpenAddCreateWindowScreenCenter);
                 m.AddSeparator("");
                 m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach);
                 m.AddItem(new GUIContent("Show Spawner Stats"), spawnerDebugInfoVisible, ToggleSpawnerStats);
+                m.AddItem(new GUIContent("Update Shortcuts"), false, UpdateShortcuts, VFXViewWindow.currentWindow);
                 m.ShowAsContext();
+
             }
 
         }
