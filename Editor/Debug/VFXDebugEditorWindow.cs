@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.SceneManagement;
 using UnityEditor;
@@ -277,6 +277,7 @@ namespace UnityEngine.VFX.DebugTools
                 bool filterString = !string.IsNullOrEmpty(filter);
 
                 Profiler.BeginSample("VFXDebugWindow.DrawAssetHeader");
+
                 // Display group header if new asset
                 if (viewMode == ViewMode.Grouped && groupByAsset && currentAsset != entry.asset)
                 {
@@ -333,7 +334,7 @@ namespace UnityEngine.VFX.DebugTools
                 Rect line = GUILayoutUtility.GetRect(Contents.none, EditorStyles.toolbar, GUILayout.ExpandWidth(true));
                 {
                     GUI.Box(line, Contents.none, EditorStyles.toolbarButton);
-
+                    line.xMin += 8;
                     if (viewMode == ViewMode.Grouped && groupByScene) line.xMin += 24;
                     if (viewMode == ViewMode.Grouped && groupByAsset) line.xMin += 24;
 
@@ -343,6 +344,16 @@ namespace UnityEngine.VFX.DebugTools
                     bool b = GUI.Toggle(r, entry.gameObject.activeSelf, "", EditorStyles.toggle);
                     if (entry.gameObject.activeSelf != b)
                         entry.gameObject.SetActive(b);
+
+                    r.xMin = r.xMax; r.width = 24;
+                    if (string.IsNullOrEmpty(currentScene))
+                        GUI.Label(r, "", EditorStyles.toolbar);
+                    else
+                    {
+                        if (GUI.Button(r, IsShowAdvanced(entry.component) ? "▼" : "►", EditorStyles.toolbarButton))
+                            ToggleShowAdvanced(entry.component);
+                    }
+
 
                     r.xMin = r.xMax;
                     r.width = 280 - 18;
@@ -389,9 +400,7 @@ namespace UnityEngine.VFX.DebugTools
                     if (GUI.Button(r, entry.rendered ? Contents.rendererOnIcon : Contents.rendererOffIcon, EditorStyles.toolbarButton))
                         entry.ToggleRendered();
 
-                    r.xMin = r.xMax; r.width = 32;
-                    if (GUI.Button(r, IsShowAdvanced(entry.component)? "(-)" : "(+)", EditorStyles.toolbarButton))
-                        ToggleShowAdvanced(entry.component);
+
 
                     float m = r.xMax;
 
@@ -414,7 +423,9 @@ namespace UnityEngine.VFX.DebugTools
                         }
                     }
                 }
-                if (IsShowAdvanced(entry.component))
+
+                // Show advanced info for component
+                if (IsShowAdvanced(entry.component) && (!string.IsNullOrEmpty(currentScene)))
                 {
                     if (systemNames == null)
                         systemNames = new List<string>();
@@ -427,7 +438,9 @@ namespace UnityEngine.VFX.DebugTools
                             var info = entry.component.GetParticleSystemInfo(s);
                             info = entry.component.GetParticleSystemInfo(Shader.PropertyToID(s));
                             Rect r = line;
-                            r.xMin = 64;
+                            r.xMin = 56;
+                            if (groupByAsset) r.xMin += 24;
+                            if (groupByScene) r.xMin += 24;
                             r.width = 128;
                             GUI.Label(r, s, Styles.toolbarButton);
 
@@ -443,12 +456,32 @@ namespace UnityEngine.VFX.DebugTools
                             else if (t < 0.5f)
                                 c = Styles.orange;
 
+                            GUI.Label(r, "", EditorStyles.toolbarButton);
                             EditorGUI.DrawRect(p, c);
                             GUI.Label(r,$"{info.aliveCount}/{info.capacity}", Styles.centerLabel);
 
-                            r.xMin = r.xMax; r.width = 120;
+                            r.xMin = r.xMax; r.width = 90;
                             GUI.Label(r, info.sleeping? "Sleeping" : "Not Sleeping", Styles.toolbarButtonBold);
 
+
+                            r.xMin = r.xMax + 40; r.width = 80;
+                            GUI.Label(r, "Max seen:", Styles.toolbarButton);
+
+                            r.xMin = r.xMax; r.width = 200;
+                            uint maxC = entry.GetMaxAliveCount(s, info.aliveCount);
+                            t = (float)maxC / info.capacity;
+                            p = r;
+                            p.width = r.width * Mathf.Lerp(.05f, 1f, t);
+
+                            c = Styles.green;
+                            if (t < 0.1f)
+                                c = Styles.red;
+                            else if (t < 0.5f)
+                                c = Styles.orange;
+
+                            GUI.Label(r, "", EditorStyles.toolbarButton);
+                            EditorGUI.DrawRect(p, c);
+                            GUI.Label(r, $"{maxC}/{info.capacity}", Styles.centerLabel);
                         }
                     }
 
