@@ -42,28 +42,28 @@ static class VFXGraphExtension
         Profiler.EndSample();
     }
 
-
-    static bool spawnerDebugInfoVisible
+    static bool debugInfoVisible
     {
-        get { return EditorPrefs.GetBool("VFXGraphExtension.spawnerDebugInfoVisible", true); }
-        set { EditorPrefs.SetBool("VFXGraphExtension.spawnerDebugInfoVisible", value); }
+        get { return EditorPrefs.GetBool("VFXGraphExtension.debugInfoVisible", true); }
+        set { EditorPrefs.SetBool("VFXGraphExtension.debugInfoVisible", value); }
     }
 
     static List<string> names = new List<string>();
-    static List<SpawnerDebugInfo> todelete = new List<SpawnerDebugInfo>();
+    static List<SpawnerDebugInfo> spawnersToDelete = new List<SpawnerDebugInfo>();
+    static List<SystemDebugInfo> systemsToDelete = new List<SystemDebugInfo>();
 
     static void UpdateDebugInfo()
     {
-        if (spawnerDebugInfos == null)
+        if (spawnerDebugInfos == null || systemDebugInfos == null)
             return;
 
         VisualEffect vfx = VFXViewWindow.currentWindow.graphView.attachedComponent;
 
         foreach (var debugInfo in spawnerDebugInfos)
         {
-            debugInfo.debugPanel.visible = spawnerDebugInfoVisible;
-            if (!spawnerDebugInfoVisible)
-                return;
+            debugInfo.debugPanel.visible = debugInfoVisible;
+            if (!debugInfoVisible)
+                continue;
             
             if(vfx == null)
             {
@@ -79,7 +79,7 @@ static class VFXGraphExtension
             {
                 if(debugInfo.ui == null)
                 {
-                    todelete.Add(debugInfo);
+                    spawnersToDelete.Add(debugInfo);
                     continue;
                 }
 
@@ -92,7 +92,6 @@ static class VFXGraphExtension
                     // should not happen
                     continue;
                 }
-
                 
                 var spawnerInfo = vfx.GetSpawnSystemInfo(debugInfo.name);
                 if (spawnerInfo == null)
@@ -230,10 +229,70 @@ on the stop input, or exhausting its loops";
             }
         }
 
-        foreach (var info in todelete)
+        foreach (var info in spawnersToDelete)
             spawnerDebugInfos.Remove(info);
 
-        todelete.Clear();
+        spawnersToDelete.Clear();
+
+
+        foreach(var systemInfo in systemDebugInfos)
+        {
+            systemInfo.panel.visible = debugInfoVisible;
+            if (!debugInfoVisible)
+                continue;
+
+            if (systemInfo.model == null)
+            {
+                systemsToDelete.Add(systemInfo);
+                continue;
+            }
+
+            var data = systemInfo.model.GetData() as VFXDataParticle;
+            if (data == null || systemInfo.model.GetParent() == null)
+            {
+                systemInfo.countLabel.text = "CONTEXT NOT CONNECTED";
+                systemInfo.progress.style.width = 0;
+                continue;
+            }
+
+            var systemModel = systemInfo.model.GetParent();
+            string systemName = data.title;
+            var capacity = (uint)data.GetSetting("capacity").value;
+            var layout = data.GetCurrentAttributeLayout();
+
+
+            if(vfx != null) // attached
+            {
+                var vfxSystemInfo = vfx.GetParticleSystemInfo(systemName);
+                uint aliveCount = vfxSystemInfo.aliveCount;
+                float t = (float)aliveCount / capacity;
+                systemInfo.countLabel.text = $"{vfxSystemInfo.aliveCount.ToString("N0")} / {capacity.ToString("N0")}";
+                systemInfo.progress.style.width = t * 240;
+
+                if (t > 0.85f)
+                    systemInfo.progress.style.color = Styles.sysInfoGreen;
+                else if (t > 0.5f)
+                    systemInfo.progress.style.color = Styles.sysInfoOrange;
+                else
+                    systemInfo.progress.style.color = Styles.sysInfoRed;
+
+                systemInfo.infoLabel.text = $"{(vfxSystemInfo.sleeping?"SLEEPING ":"")}{(vfx.culled ? "CULLED " : "")}{(vfx.pause ? "PAUSED " : "")}{(vfx.enabled ? "" : "DISABLED ")}";
+
+
+            }
+            else // not attached
+            {
+                systemInfo.countLabel.text = $"??? / {capacity.ToString("N0")}";
+                systemInfo.infoLabel.text = "Please attach graph to scene instance";
+                systemInfo.progress.style.width = 0;
+            }
+        }
+
+        foreach (var info in systemsToDelete)
+            systemDebugInfos.Remove(info);
+
+        systemsToDelete.Clear();
+
     }
 
     static void OnKeyDown(KeyDownEvent e)
@@ -282,11 +341,25 @@ on the stop input, or exhausting its loops";
             }
         }
     }
+
+    struct SystemDebugInfo
+    {
+        public VisualElement panel;
+        public VFXContextUI ui;
+        public VFXContext model;
+        public Label countLabel;
+        public Label infoLabel;
+        public VisualElement progress;
+        public Label attribLabel;
+        public Label memoryLabel;
+    }
+    
     static List<SpawnerDebugInfo> spawnerDebugInfos;
+    static List<SystemDebugInfo> systemDebugInfos;
 
     static void ToggleSpawnerStats()
     {
-        spawnerDebugInfoVisible = !spawnerDebugInfoVisible;
+        debugInfoVisible = !debugInfoVisible;
         UpdateStatsUI();
     }
 
@@ -304,147 +377,239 @@ on the stop input, or exhausting its loops";
         if (spawnerDebugInfos == null)
             spawnerDebugInfos = new List<SpawnerDebugInfo>();
 
-        
+        if (systemDebugInfos == null)
+            systemDebugInfos = new List<SystemDebugInfo>();
+
         gv.Query<VFXContextUI>().Build().ForEach((context) =>
         {
-            if (!context.ClassListContains("spawner"))
-                return;
-
-            string name = context.Q<Label>("user-label").text;
-
-            if (spawnerDebugInfos.Any(o => o.ui == context))
-                return;
-
-            SpawnerDebugInfo info = new SpawnerDebugInfo();
-            info.name = name;
-
-            var panel = context.Q("Spawner-Debug");
-            if (panel == null)
+            if (context.ClassListContains("spawner"))
             {
-                panel = new VisualElement()
+                string name = context.Q<Label>("user-label").text;
+
+                if (spawnerDebugInfos.Any(o => o.ui == context))
+                    return;
+
+                SpawnerDebugInfo info = new SpawnerDebugInfo();
+                info.name = name;
+
+                var panel = context.Q("Spawner-Debug");
+                if (panel == null)
                 {
-                    name = "Spawner-Debug"
-                };
-                panel.style.position = UnityEngine.UIElements.Position.Absolute;
-                panel.style.top = 22;
-                panel.style.borderBottomLeftRadius = 8;
-                panel.style.borderBottomRightRadius = 8;
-                panel.style.borderTopLeftRadius = 8;
-                panel.style.borderTopRightRadius = 8;
-                panel.style.paddingBottom = 8;
-                panel.style.paddingLeft = 8;
-                panel.style.paddingRight = 8;
-                panel.style.paddingTop = 8;
-                panel.style.left = 432;
-                panel.style.height = 180;
-                panel.style.width = 260;
-                panel.style.backgroundColor = new StyleColor(new Color(0.15f, 0.15f, 0.15f, 1.0f));
+                    panel = new VisualElement()
+                    {
+                        name = "Spawner-Debug"
+                    };
+                    panel.style.position = UnityEngine.UIElements.Position.Absolute;
+                    panel.style.top = 22;
+                    panel.style.borderBottomLeftRadius = 8;
+                    panel.style.borderBottomRightRadius = 8;
+                    panel.style.borderTopLeftRadius = 8;
+                    panel.style.borderTopRightRadius = 8;
+                    panel.style.paddingBottom = 8;
+                    panel.style.paddingLeft = 8;
+                    panel.style.paddingRight = 8;
+                    panel.style.paddingTop = 8;
+                    panel.style.left = 432;
+                    panel.style.height = 180;
+                    panel.style.width = 260;
+                    panel.style.backgroundColor = new StyleColor(new Color(0.15f, 0.15f, 0.15f, 1.0f));
 
-                var playLabel = new Label("?");
-                playLabel.style.fontSize = 26;
-                playLabel.style.position = UnityEngine.UIElements.Position.Absolute;
-                playLabel.style.left = 8;
-                playLabel.style.width = 32;
-                playLabel.style.top = 8;
-                playLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-                playLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+                    var playLabel = new Label("?");
+                    playLabel.style.fontSize = 26;
+                    playLabel.style.position = UnityEngine.UIElements.Position.Absolute;
+                    playLabel.style.left = 8;
+                    playLabel.style.width = 32;
+                    playLabel.style.top = 8;
+                    playLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    playLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
 
-                var bigLabel = new Label("");
-                bigLabel.style.fontSize = 28;
-                bigLabel.style.position = UnityEngine.UIElements.Position.Absolute;
-                bigLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
-                bigLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-                bigLabel.style.left = 48;
-                bigLabel.style.top = 8;
-                bigLabel.style.width = 200;
+                    var bigLabel = new Label("");
+                    bigLabel.style.fontSize = 28;
+                    bigLabel.style.position = UnityEngine.UIElements.Position.Absolute;
+                    bigLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+                    bigLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    bigLabel.style.left = 48;
+                    bigLabel.style.top = 8;
+                    bigLabel.style.width = 200;
 
-                var timeLabel = new Label("10.0");
-                timeLabel.style.fontSize = 28;
-                timeLabel.style.position = UnityEngine.UIElements.Position.Absolute;
-                timeLabel.style.unityTextAlign = TextAnchor.MiddleRight;
-                timeLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-                timeLabel.style.left = 48;
-                timeLabel.style.top = 8;
-                timeLabel.style.width = 90;
+                    var timeLabel = new Label("10.0");
+                    timeLabel.style.fontSize = 28;
+                    timeLabel.style.position = UnityEngine.UIElements.Position.Absolute;
+                    timeLabel.style.unityTextAlign = TextAnchor.MiddleRight;
+                    timeLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    timeLabel.style.left = 48;
+                    timeLabel.style.top = 8;
+                    timeLabel.style.width = 90;
 
-                var timeLabel2 = new Label("/10.0");
-                timeLabel2.style.fontSize = 28;
-                timeLabel2.style.position = UnityEngine.UIElements.Position.Absolute;
-                timeLabel2.style.unityTextAlign = TextAnchor.MiddleLeft;
-                timeLabel2.style.unityFontStyleAndWeight = FontStyle.Bold;
-                timeLabel2.style.left = 138;
-                timeLabel2.style.top = 8;
-                timeLabel2.style.width = 110;
+                    var timeLabel2 = new Label("/10.0");
+                    timeLabel2.style.fontSize = 28;
+                    timeLabel2.style.position = UnityEngine.UIElements.Position.Absolute;
+                    timeLabel2.style.unityTextAlign = TextAnchor.MiddleLeft;
+                    timeLabel2.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    timeLabel2.style.left = 138;
+                    timeLabel2.style.top = 8;
+                    timeLabel2.style.width = 110;
 
-                var label = new Label($"Debug Spawner Info: {info.name}");
-                label.style.fontSize = 12;
-                label.style.position = UnityEngine.UIElements.Position.Absolute;
-                label.style.top = 64;
-                label.style.left = 8;
+                    var label = new Label($"Debug Spawner Info: {info.name}");
+                    label.style.fontSize = 12;
+                    label.style.position = UnityEngine.UIElements.Position.Absolute;
+                    label.style.top = 64;
+                    label.style.left = 8;
 
-                var progressBG = new VisualElement();
-                progressBG.style.position = UnityEngine.UIElements.Position.Absolute;
-                progressBG.style.top = 48;
-                progressBG.style.left = 8;
-                progressBG.style.width = 240;
-                progressBG.style.height = 8;
-                progressBG.style.backgroundColor = new StyleColor(new Color(.3f, .3f, .3f, 1f));
-                progressBG.style.borderBottomLeftRadius = 3;
-                progressBG.style.borderBottomRightRadius = 3;
-                progressBG.style.borderTopLeftRadius = 3;
-                progressBG.style.borderTopRightRadius = 3;
+                    var progressBG = new VisualElement();
+                    progressBG.style.position = UnityEngine.UIElements.Position.Absolute;
+                    progressBG.style.top = 48;
+                    progressBG.style.left = 8;
+                    progressBG.style.width = 240;
+                    progressBG.style.height = 8;
+                    progressBG.style.backgroundColor = new StyleColor(new Color(.3f, .3f, .3f, 1f));
+                    progressBG.style.borderBottomLeftRadius = 3;
+                    progressBG.style.borderBottomRightRadius = 3;
+                    progressBG.style.borderTopLeftRadius = 3;
+                    progressBG.style.borderTopRightRadius = 3;
 
-                var progress = new VisualElement();
-                progress.style.position = UnityEngine.UIElements.Position.Absolute;
-                progress.style.top = 48;
-                progress.style.left = 8;
-                progress.style.width = 240;
-                progress.style.height = 8;
-                progress.style.backgroundColor = new StyleColor(new Color(.3f, 1f, .3f, 1f));
-                progress.style.borderBottomLeftRadius = 3;
-                progress.style.borderBottomRightRadius = 3;
-                progress.style.borderTopLeftRadius = 3;
-                progress.style.borderTopRightRadius = 3;
+                    var progress = new VisualElement();
+                    progress.style.position = UnityEngine.UIElements.Position.Absolute;
+                    progress.style.top = 48;
+                    progress.style.left = 8;
+                    progress.style.width = 240;
+                    progress.style.height = 8;
+                    progress.style.backgroundColor = new StyleColor(new Color(.3f, 1f, .3f, 1f));
+                    progress.style.borderBottomLeftRadius = 3;
+                    progress.style.borderBottomRightRadius = 3;
+                    progress.style.borderTopLeftRadius = 3;
+                    progress.style.borderTopRightRadius = 3;
 
-                var evtAttributeHeader = new Label("Event Attributes");
-                evtAttributeHeader.style.top = 90;
-                evtAttributeHeader.style.left = 3;
-                evtAttributeHeader.style.fontSize = 12;
-                evtAttributeHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    var evtAttributeHeader = new Label("Event Attributes");
+                    evtAttributeHeader.style.top = 90;
+                    evtAttributeHeader.style.left = 3;
+                    evtAttributeHeader.style.fontSize = 12;
+                    evtAttributeHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
 
-                var evtAttribute = new Label("(No Attributes)");
-                evtAttribute.style.top = 93;
-                evtAttribute.style.left = 3;
-                evtAttribute.style.fontSize = 12;
+                    var evtAttribute = new Label("(No Attributes)");
+                    evtAttribute.style.top = 93;
+                    evtAttribute.style.left = 3;
+                    evtAttribute.style.fontSize = 12;
 
-                panel.Add(playLabel);
-                panel.Add(bigLabel);
-                panel.Add(timeLabel);
-                panel.Add(timeLabel2);
-                panel.Add(progressBG);
-                panel.Add(progress);
-                panel.Add(label);
-                panel.Add(evtAttributeHeader);
-                panel.Add(evtAttribute);
-                context.Add(panel);
+                    panel.Add(playLabel);
+                    panel.Add(bigLabel);
+                    panel.Add(timeLabel);
+                    panel.Add(timeLabel2);
+                    panel.Add(progressBG);
+                    panel.Add(progress);
+                    panel.Add(label);
+                    panel.Add(evtAttributeHeader);
+                    panel.Add(evtAttribute);
+                    context.Add(panel);
 
-                info.ui = context;
-                info.label = label;
-                info.bigLabel = bigLabel;
-                info.timeLabel = timeLabel;
-                info.timeLabel2 = timeLabel2;
-                info.playLabel = playLabel;
-                info.progress = progress;
+                    info.ui = context;
+                    info.label = label;
+                    info.bigLabel = bigLabel;
+                    info.timeLabel = timeLabel;
+                    info.timeLabel2 = timeLabel2;
+                    info.playLabel = playLabel;
+                    info.progress = progress;
+                    info.debugPanel = panel;
+                    info.evtAttribute = evtAttribute;
+
+                    spawnerDebugInfos.Add(info);
+                }
+
                 info.debugPanel = panel;
-                info.evtAttribute = evtAttribute;
-
-                spawnerDebugInfos.Add(info);
             }
+            else if (context.ClassListContains("init"))
+            {
+                if (systemDebugInfos.Any(o => o.ui == context))
+                    return;
 
-            info.debugPanel = panel;
+                var model = context.controller.model;
+                SystemDebugInfo info = new SystemDebugInfo();
 
+                var panel = context.Q("System-Debug");
+                if (panel == null)
+                {
+                    panel = new VisualElement()
+                    {
+                        name = "System-Debug"
+                    };
+                    panel.style.position = UnityEngine.UIElements.Position.Absolute;
+                    panel.style.top = 22;
+                    panel.style.borderBottomLeftRadius = 8;
+                    panel.style.borderBottomRightRadius = 8;
+                    panel.style.borderTopLeftRadius = 8;
+                    panel.style.borderTopRightRadius = 8;
+                    panel.style.paddingBottom = 8;
+                    panel.style.paddingLeft = 8;
+                    panel.style.paddingRight = 8;
+                    panel.style.paddingTop = 8;
+                    panel.style.left = 432;
+                    panel.style.height = 180;
+                    panel.style.width = 260;
+                    panel.style.backgroundColor = new StyleColor(new Color(0.15f, 0.15f, 0.15f, 1.0f));
 
+                    var label = new Label($"System Info");
+                    label.style.fontSize = 22;
+                    label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    label.style.position = UnityEngine.UIElements.Position.Absolute;
+                    label.style.top = 4;
+                    label.style.left = 8;
 
+                    var countLabel = new Label($"Count : 0");
+                    countLabel.style.fontSize = 12;
+                    countLabel.style.position = UnityEngine.UIElements.Position.Absolute;
+                    countLabel.style.width = 240;
+                    countLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+                    countLabel.style.top = 41;
+                    countLabel.style.left = 8;
+                    countLabel.style.color = Color.white;
+
+                    var progressBG = new VisualElement();
+                    progressBG.style.position = UnityEngine.UIElements.Position.Absolute;
+                    progressBG.style.top = 40;
+                    progressBG.style.left = 8;
+                    progressBG.style.width = 240;
+                    progressBG.style.height = 18;
+                    progressBG.style.backgroundColor = new StyleColor(new Color(.3f, .3f, .3f, 1f));
+                    progressBG.style.borderBottomLeftRadius = 3;
+                    progressBG.style.borderBottomRightRadius = 3;
+                    progressBG.style.borderTopLeftRadius = 3;
+                    progressBG.style.borderTopRightRadius = 3;
+
+                    var progress = new VisualElement();
+                    progress.style.position = UnityEngine.UIElements.Position.Absolute;
+                    progress.style.top = 40;
+                    progress.style.left = 8;
+                    progress.style.width = 240;
+                    progress.style.height = 18;
+                    progress.style.backgroundColor = new StyleColor(Styles.sysInfoGreen);
+                    progress.style.borderBottomLeftRadius = 3;
+                    progress.style.borderBottomRightRadius = 3;
+                    progress.style.borderTopLeftRadius = 3;
+                    progress.style.borderTopRightRadius = 3;
+
+                    var infoLabel = new Label($"INFO");
+                    infoLabel.style.fontSize = 12;
+                    infoLabel.style.position = UnityEngine.UIElements.Position.Absolute;
+                    infoLabel.style.top = 64;
+                    infoLabel.style.left = 8;
+
+                    panel.Add(label);
+                    panel.Add(progressBG);
+                    panel.Add(progress);
+                    panel.Add(countLabel);
+                    panel.Add(infoLabel);
+                    context.Add(panel);
+
+                    info.ui = context;
+                    info.infoLabel = infoLabel;
+                    info.panel = panel;
+                    info.model = model;
+                    info.countLabel = countLabel;
+                    info.progress = progress;
+
+                    systemDebugInfos.Add(info);
+                }
+            }
         });
     }
 
@@ -461,6 +626,13 @@ on the stop input, or exhausting its loops";
         vfx.visualEffectAsset = asset;
         Selection.activeGameObject = go;
         VFXViewWindow.currentWindow.LoadAsset(asset, vfx);
+    }
+
+    static class Styles
+    {
+        public static Color sysInfoGreen = new Color(.1f, .5f, .1f, 1f);
+        public static Color sysInfoOrange = new Color(.5f, .4f, .1f, 1f);
+        public static Color sysInfoRed = new Color(.5f, .1f, .1f, 1f);
     }
 
     class VFXExtensionBoard : GraphElement
@@ -505,7 +677,7 @@ on the stop input, or exhausting its loops";
                 m.AddItem(new GUIContent("Add System from Template... (T)"), false, OpenAddCreateWindowScreenCenter);
                 m.AddSeparator("");
                 m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach);
-                m.AddItem(new GUIContent("Show Spawner Stats"), spawnerDebugInfoVisible, ToggleSpawnerStats);
+                m.AddItem(new GUIContent("Show Debug Stats"), debugInfoVisible, ToggleSpawnerStats);
                 m.ShowAsContext();
             }
 
