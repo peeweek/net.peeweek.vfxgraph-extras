@@ -251,7 +251,8 @@ on the stop input, or exhausting its loops";
             if (data == null || systemInfo.model.GetParent() == null)
             {
                 systemInfo.countLabel.text = "CONTEXT NOT CONNECTED";
-                systemInfo.progress.style.width = 0;
+                systemInfo.progress.style.width = 240;
+                systemInfo.progress.style.color = Color.magenta;
                 continue;
             }
 
@@ -269,14 +270,14 @@ on the stop input, or exhausting its loops";
                 systemInfo.countLabel.text = $"{vfxSystemInfo.aliveCount.ToString("N0")} / {capacity.ToString("N0")}";
                 systemInfo.progress.style.width = t * 240;
 
-                if (t > 0.85f)
-                    systemInfo.progress.style.color = Styles.sysInfoGreen;
-                else if (t > 0.5f)
-                    systemInfo.progress.style.color = Styles.sysInfoOrange;
+                if (t > 0.75f)
+                    systemInfo.progress.style.backgroundColor = Styles.sysInfoGreen;
+                else if (t > 0.33f)
+                    systemInfo.progress.style.backgroundColor = Styles.sysInfoOrange;
                 else
-                    systemInfo.progress.style.color = Styles.sysInfoRed;
+                    systemInfo.progress.style.backgroundColor = Styles.sysInfoRed;
 
-                systemInfo.infoLabel.text = $"{(vfxSystemInfo.sleeping?"SLEEPING ":"")}{(vfx.culled ? "CULLED " : "")}{(vfx.pause ? "PAUSED " : "")}{(vfx.enabled ? "" : "DISABLED ")}";
+                systemInfo.infoLabel.text = $"{(vfx.enabled ? "[ENABLED]" : "[DISABLED]")} {(vfxSystemInfo.sleeping?"[SLEEPING]":"[AWAKE]")} {(vfx.culled ? "[CULLED]" : "[VISIBLE]")} {(vfx.pause ? "[PAUSED]" : "")}";
 
 
             }
@@ -284,8 +285,38 @@ on the stop input, or exhausting its loops";
             {
                 systemInfo.countLabel.text = $"??? / {capacity.ToString("N0")}";
                 systemInfo.infoLabel.text = "Please attach graph to scene instance";
-                systemInfo.progress.style.width = 0;
+                systemInfo.progress.style.width = 240;
+                systemInfo.progress.style.backgroundColor = Styles.sysInfoUnknown;
             }
+
+            StringBuilder sb = new StringBuilder();
+            uint stride = 0;
+            foreach(var b in layout)
+            {
+                foreach(var attr in b.attributes)
+                {
+                    if(!string.IsNullOrEmpty(attr.name))
+                        sb.AppendLine($" - {attr.name} : (4 Bytes)");
+                    else
+                        sb.AppendLine($" - (unused) : (4 Bytes)");
+
+                    stride += 1;
+                }
+            }
+            systemInfo.attribLabel.text = sb.ToString();
+
+            ulong totalSize = stride * 4 * capacity;
+
+            if (totalSize > 1000000000)
+                systemInfo.memoryLabel.text = $"GPU Memory : {(totalSize / 1000000000f).ToString("F2")} GB";
+            if (totalSize > 1000000)
+                systemInfo.memoryLabel.text = $"GPU Memory : {(totalSize / 1000000f).ToString("F2")} MB";
+            else if (totalSize > 1000)
+                systemInfo.memoryLabel.text = $"GPU Memory : {(totalSize / 1000f).ToString("F2")} KB";
+            else
+                systemInfo.memoryLabel.text = $"GPU Memory : {((float)totalSize).ToString("F2")} B";
+
+            systemInfo.panel.style.height = 136 + (stride * 15);
         }
 
         foreach (var info in systemsToDelete)
@@ -372,7 +403,6 @@ on the stop input, or exhausting its loops";
         var gv = wnd.graphView;
         if (gv == null)
             return;
-
 
         if (spawnerDebugInfos == null)
             spawnerDebugInfos = new List<SpawnerDebugInfo>();
@@ -593,15 +623,40 @@ on the stop input, or exhausting its loops";
                     infoLabel.style.top = 64;
                     infoLabel.style.left = 8;
 
+                    var memLabel = new Label("GPU Memory : 0b");
+                    memLabel.style.fontSize = 12;
+                    memLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    memLabel.style.position = UnityEngine.UIElements.Position.Absolute;
+                    memLabel.style.top = 90;
+                    memLabel.style.left = 8;
+
+                    var attrHeaderLabel = new Label("Stored Attributes");
+                    attrHeaderLabel.style.fontSize = 12;
+                    attrHeaderLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    attrHeaderLabel.style.position = UnityEngine.UIElements.Position.Absolute;
+                    attrHeaderLabel.style.top = 116;
+                    attrHeaderLabel.style.left = 8;
+
+                    var attrLabel = new Label("---");
+                    attrLabel.style.fontSize = 12;
+                    attrLabel.style.position = UnityEngine.UIElements.Position.Absolute;
+                    attrLabel.style.top = 132;
+                    attrLabel.style.left = 8;
+
                     panel.Add(label);
                     panel.Add(progressBG);
                     panel.Add(progress);
                     panel.Add(countLabel);
                     panel.Add(infoLabel);
+                    panel.Add(memLabel);
+                    panel.Add(attrHeaderLabel);
+                    panel.Add(attrLabel);
                     context.Add(panel);
 
                     info.ui = context;
                     info.infoLabel = infoLabel;
+                    info.memoryLabel = memLabel;
+                    info.attribLabel = attrLabel;
                     info.panel = panel;
                     info.model = model;
                     info.countLabel = countLabel;
@@ -631,8 +686,9 @@ on the stop input, or exhausting its loops";
     static class Styles
     {
         public static Color sysInfoGreen = new Color(.1f, .5f, .1f, 1f);
-        public static Color sysInfoOrange = new Color(.5f, .4f, .1f, 1f);
+        public static Color sysInfoOrange = new Color(.5f, .3f, .1f, 1f);
         public static Color sysInfoRed = new Color(.5f, .1f, .1f, 1f);
+        public static Color sysInfoUnknown = new Color(.5f, .1f, .7f, 1f); 
     }
 
     class VFXExtensionBoard : GraphElement
