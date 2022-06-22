@@ -14,6 +14,7 @@ namespace UnityEditor.VFX.Block
         SerializedProperty ContextType;
         SerializedProperty CompatibleData;
         SerializedProperty Attributes;
+        SerializedProperty CustomAttributes;
         SerializedProperty Properties;
         SerializedProperty UseTotalTime;
         SerializedProperty UseDeltaTime;
@@ -21,6 +22,7 @@ namespace UnityEditor.VFX.Block
         SerializedProperty SourceCode;
 
         ReorderableList attributeList;
+        ReorderableList customAttributeList;
         ReorderableList propertiesList;
 
         bool dirty;
@@ -31,10 +33,12 @@ namespace UnityEditor.VFX.Block
             ContextType = serializedObject.FindProperty("ContextType");
             CompatibleData = serializedObject.FindProperty("CompatibleData");
             Attributes = serializedObject.FindProperty("Attributes");
+            CustomAttributes = serializedObject.FindProperty("CustomAttributes");
             Properties = serializedObject.FindProperty("Properties");
             UseTotalTime = serializedObject.FindProperty("UseTotalTime");
             UseDeltaTime = serializedObject.FindProperty("UseDeltaTime");
             UseRandom = serializedObject.FindProperty("UseRandom");
+
             SourceCode = serializedObject.FindProperty("SourceCode");
             source = SourceCode.stringValue;
             dirty = false;
@@ -48,6 +52,16 @@ namespace UnityEditor.VFX.Block
                 attributeList.onRemoveCallback = OnRemoveAttribute;
                 attributeList.drawElementCallback = OnDrawAttribute;
                 attributeList.onReorderCallback = OnReorderAttribute;
+            }
+
+            if (customAttributeList == null)
+            {
+                customAttributeList = new ReorderableList(serializedObject, CustomAttributes, true, true, true, true);
+                customAttributeList.drawHeaderCallback = (r) => { GUI.Label(r, "Custom Attributes"); };
+                customAttributeList.onAddCallback = OnAddCustomAttribute;
+                customAttributeList.onRemoveCallback = OnRemoveCustomAttribute;
+                customAttributeList.drawElementCallback = OnDrawCustomAttribute;
+                customAttributeList.onReorderCallback = OnReorderCustomAttribute;
             }
 
             if (propertiesList == null)
@@ -101,6 +115,61 @@ namespace UnityEditor.VFX.Block
             modeRect.xMin = split;
             var mode = sp.FindPropertyRelative("mode");
             var value = EditorGUI.EnumPopup(modeRect, (AttributeMode)mode.intValue);
+            mode.intValue = (int)System.Convert.ChangeType(value, typeof(AttributeMode));
+
+            if(GUI.changed)
+                Apply();
+        }
+
+        void OnAddCustomAttribute(ReorderableList list)
+        {
+            CustomAttributes.InsertArrayElementAtIndex(0);
+            var sp = CustomAttributes.GetArrayElementAtIndex(0);
+            sp.FindPropertyRelative("name").stringValue = "";
+            sp.FindPropertyRelative("type").enumValueIndex = 0; // Float
+            sp.FindPropertyRelative("mode").enumValueIndex = 3; // ReadWrite
+            dirty = true;
+            Apply();
+        }
+
+        void OnRemoveCustomAttribute(ReorderableList list)
+        {
+             if (list.index != -1)
+                CustomAttributes.DeleteArrayElementAtIndex(list.index);
+            dirty = true;
+            Apply();
+        }
+
+        void OnReorderCustomAttribute(ReorderableList list)
+        {
+            dirty = true;
+            Apply();
+        }
+
+        void OnDrawCustomAttribute(Rect rect, int index, bool isActive, bool isFocused)
+        {
+            var sp = CustomAttributes.GetArrayElementAtIndex(index);
+            rect.yMin += 2;
+            rect.height = 16;
+            float split = rect.width / 3;
+
+            var nameRect = rect;    
+            nameRect.width = split - 1;
+            string name = sp.FindPropertyRelative("name").stringValue;
+            sp.FindPropertyRelative("name").stringValue = EditorGUI.DelayedTextField(nameRect, name);
+
+            var typeRect = rect;
+            typeRect.xMin = nameRect.xMax + 2;
+            typeRect.width = split - 1;
+            var type = sp.FindPropertyRelative("type");
+            var value = EditorGUI.EnumPopup(typeRect, (CustomAttributeUtility.Signature) type.intValue);
+            type.intValue = (int)System.Convert.ChangeType(value, typeof(CustomAttributeUtility.Signature));
+
+            var modeRect = rect;
+            modeRect.xMin = typeRect.xMax + 2;
+            modeRect.width = split - 1;
+            var mode = sp.FindPropertyRelative("mode");
+            value = EditorGUI.EnumPopup(modeRect, (AttributeMode) mode.intValue);
             mode.intValue = (int)System.Convert.ChangeType(value, typeof(AttributeMode));
 
             if(GUI.changed)
@@ -177,6 +246,7 @@ namespace UnityEditor.VFX.Block
             EditorGUILayout.PropertyField(ContextType);
             EditorGUILayout.PropertyField(CompatibleData);
             attributeList.DoLayoutList();
+            customAttributeList.DoLayoutList();
             propertiesList.DoLayoutList(); 
 
             EditorGUILayout.Space();
@@ -193,7 +263,10 @@ namespace UnityEditor.VFX.Block
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Source Code", EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
-            source = EditorGUILayout.TextArea(source, Styles.codeEditor, GUILayout.MinHeight(64));
+            source = EditorGUILayout.TextArea(source, Styles.codeEditor, new GUILayoutOption[] {
+                GUILayout.MinHeight(128), 
+                GUILayout.ExpandHeight(true)
+            });
 
             if (EditorGUI.EndChangeCheck())
                 dirty = true;

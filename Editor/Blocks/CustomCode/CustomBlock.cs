@@ -2,6 +2,8 @@ using System;
 using UnityEngine;
 using System.Collections.Generic;
 
+using UnityEngine.VFX;
+
 namespace UnityEditor.VFX.Block
 {
     [VFXInfo(category = "Custom")]
@@ -12,6 +14,14 @@ namespace UnityEditor.VFX.Block
         public struct AttributeDeclarationInfo
         {
             public string name;
+            public VFXAttributeMode mode;
+        }
+
+        [Serializable]
+        public struct CustomAttributeDeclarationInfo
+        {
+            public string name;
+            public CustomAttributeUtility.Signature type;
             public VFXAttributeMode mode;
         }
 
@@ -30,6 +40,9 @@ namespace UnityEditor.VFX.Block
         public VFXDataType CompatibleData = VFXDataType.Particle;
 
         public List<AttributeDeclarationInfo> Attributes = new List<AttributeDeclarationInfo>();
+
+        public List<CustomAttributeDeclarationInfo> CustomAttributes = new List<CustomAttributeDeclarationInfo>();
+
         public List<PropertyDeclarationInfo> Properties = new List<PropertyDeclarationInfo>();
 
         public bool UseTotalTime = false;
@@ -52,6 +65,11 @@ namespace UnityEditor.VFX.Block
             {
                 foreach (var info in Attributes)
                     yield return new VFXAttributeInfo(VFXAttribute.Find(info.name), info.mode);
+
+                foreach (var c in CustomAttributes) {
+                    VFXAttribute attr = new VFXAttribute(c.name, CustomAttributeUtility.GetValueType(c.type));
+                    yield return new VFXAttributeInfo(attr, c.mode);
+                }
 
                 if (UseRandom)
                     yield return new VFXAttributeInfo(VFXAttribute.Seed, VFXAttributeMode.ReadWrite);
