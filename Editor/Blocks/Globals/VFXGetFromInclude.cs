@@ -1,23 +1,23 @@
 using System.Collections.Generic;
-using UnityEngine.VFX.Includes;
+using UnityEngine.VFX.Globals;
 
-namespace UnityEditor.VFX.Includes
+namespace UnityEditor.VFX.Globals
 {
-    [VFXInfo(category ="Includes")]
+    [VFXInfo(category ="Globals")]
     class VFXGetFromInclude : VFXOperator
     {
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InGraph)]
-        public VFXIncludeDefinition include;
+        public VFXGlobalsDefinition definition;
 
-        public override string name => "Get Values from Include";
+        public override string name => $"Get Globals {(definition == null? "":"("+(ObjectNames.NicifyVariableName(definition.name))+")")}";
 
         protected override IEnumerable<VFXPropertyWithValue> outputProperties
         {
             get
             {
-                if(include != null)
+                if(definition != null)
                 {
-                    foreach (var id in include.includes)
+                    foreach (var id in definition.includes)
                         yield return new VFXPropertyWithValue(new VFXProperty(id.realType, (string)id.name));
                 }
 
@@ -26,9 +26,9 @@ namespace UnityEditor.VFX.Includes
         protected override VFXExpression[] BuildExpression(VFXExpression[] inputExpression)
         {
             List<VFXExpression> expressions = new List<VFXExpression>();
-            foreach (var id in include.includes)
+            foreach (var id in definition.includes)
             {
-                expressions.Add(new VFXExpressionInclude(id));
+                expressions.Add(new VFXExpressionGlobal(id));
             }
             return expressions.ToArray();
         }

@@ -2,14 +2,14 @@ using System;
 using UnityEngine;
 using UnityEngine.VFX.Utility;
 
-namespace UnityEngine.VFX.Includes
+namespace UnityEngine.VFX.Globals
 {
-    [CreateAssetMenu(fileName = "New VFXInclude", menuName = "Visual Effects/VFX Include Definition")]
-    public class VFXIncludeDefinition : ScriptableObject
+    [CreateAssetMenu(fileName = "VFX Globals", menuName = "Visual Effects/VFX Globals Definition")]
+    public class VFXGlobalsDefinition : ScriptableObject
     {
         public TextAsset hlslInclude;
 
-        public enum IncludeMemberType
+        public enum MemberType
         {
             Float,
             Uint,
@@ -25,10 +25,10 @@ namespace UnityEngine.VFX.Includes
         }
 
         [Serializable]
-        public struct IncludeDefinition
+        public struct Definition
         {
             public ExposedProperty name;
-            public IncludeMemberType type;
+            public MemberType type;
 
             public Type realType
             {
@@ -36,27 +36,27 @@ namespace UnityEngine.VFX.Includes
                 {
                     switch (type)
                     {
-                        case IncludeMemberType.Float:
+                        case MemberType.Float:
                             return typeof(float);
-                        case IncludeMemberType.Uint:
+                        case MemberType.Uint:
                             return typeof(uint);
-                        case IncludeMemberType.Int:
+                        case MemberType.Int:
                             return typeof(int);
-                        case IncludeMemberType.Bool:
+                        case MemberType.Bool:
                             return typeof(bool);
-                        case IncludeMemberType.Vector2:
+                        case MemberType.Vector2:
                             return typeof(Vector2);
-                        case IncludeMemberType.Vector3:
+                        case MemberType.Vector3:
                             return typeof(Vector3);
-                        case IncludeMemberType.Vector4:
+                        case MemberType.Vector4:
                             return typeof(Vector4);
-                        case IncludeMemberType.Color:
+                        case MemberType.Color:
                             return typeof(Color);
-                        case IncludeMemberType.Texture2D:
+                        case MemberType.Texture2D:
                             return typeof(Texture2D);
-                        case IncludeMemberType.Texture3D:
+                        case MemberType.Texture3D:
                             return typeof(Texture3D);
-                        case IncludeMemberType.TextureCube:
+                        case MemberType.TextureCube:
                             return typeof(Cubemap);
                         default:
                             throw new NotImplementedException();
@@ -66,7 +66,7 @@ namespace UnityEngine.VFX.Includes
         }
 
         [field: SerializeField]
-        public IncludeDefinition[] includes { get; private set; }
+        public Definition[] includes { get; private set; }
 
 #if UNITY_EDITOR
         [ContextMenu("Create or Update HLSL Include")]
@@ -92,31 +92,31 @@ namespace UnityEngine.VFX.Includes
             UnityEditor.AssetDatabase.Refresh(UnityEditor.ImportAssetOptions.ForceUpdate);
         }
 
-        string TypeString(IncludeMemberType type)
+        string TypeString(MemberType type)
         {
             switch (type)
             {
-                case IncludeMemberType.Float:
+                case MemberType.Float:
                     return "float";
-                case IncludeMemberType.Uint:
+                case MemberType.Uint:
                     return "uint";
-                case IncludeMemberType.Int:
+                case MemberType.Int:
                     return "int";
-                case IncludeMemberType.Bool:
+                case MemberType.Bool:
                     return "bool";
-                case IncludeMemberType.Vector2:
+                case MemberType.Vector2:
                     return "float2";
-                case IncludeMemberType.Vector3:
+                case MemberType.Vector3:
                     return "float3";
-                case IncludeMemberType.Vector4:
+                case MemberType.Vector4:
                     return "float4";
-                case IncludeMemberType.Color:
+                case MemberType.Color:
                     return "float4";
-                case IncludeMemberType.Texture2D:
+                case MemberType.Texture2D:
                     return "sampler2d";
-                case IncludeMemberType.Texture3D:
+                case MemberType.Texture3D:
                     return "sampler3d";
-                case IncludeMemberType.TextureCube:
+                case MemberType.TextureCube:
                     return "samplerCube";
                 default:
                     throw new System.NotImplementedException();

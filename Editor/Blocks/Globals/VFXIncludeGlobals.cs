@@ -1,15 +1,15 @@
 using System.Collections.Generic;
-using UnityEngine.VFX.Includes;
+using UnityEngine.VFX.Globals;
 
-namespace UnityEditor.VFX.Includes
+namespace UnityEditor.VFX.Globals
 {
-    [VFXInfo(category ="Includes")]
-    internal class VFXIncludes : VFXBlock
+    [VFXInfo(category ="Globals")]
+    internal class VFXIncludeGlobals : VFXBlock
     {
-        public override string name => "Include";
+        public override string name => "Include Globals";
 
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InGraph)]
-        public VFXIncludeDefinition include;
+        public VFXGlobalsDefinition definition;
 
         public override VFXContextType compatibleContexts => VFXContextType.InitAndUpdateAndOutput;
         public override VFXDataType compatibleData => VFXDataType.Particle | VFXDataType.ParticleStrip;
@@ -19,8 +19,8 @@ namespace UnityEditor.VFX.Includes
         {
             get
             {
-                if (include != null && include.hlslInclude != null)
-                    yield return AssetDatabase.GetAssetPath(include.hlslInclude);
+                if (definition != null && definition.hlslInclude != null)
+                    yield return AssetDatabase.GetAssetPath(definition.hlslInclude);
             }
         }
     }

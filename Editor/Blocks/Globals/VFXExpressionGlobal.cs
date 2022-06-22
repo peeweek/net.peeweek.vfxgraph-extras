@@ -1,13 +1,12 @@
-using System.Collections.Generic;
 using UnityEngine.VFX;
-using UnityEngine.VFX.Includes;
+using UnityEngine.VFX.Globals;
 
-namespace UnityEditor.VFX.Includes
+namespace UnityEditor.VFX.Globals
 {
-    class VFXExpressionInclude : VFXExpression
+    class VFXExpressionGlobal : VFXExpression
     {
-        VFXIncludeDefinition.IncludeDefinition m_Definition;
-        public VFXExpressionInclude(VFXIncludeDefinition.IncludeDefinition definition) : base(VFXExpression.Flags.PerElement | VFXExpression.Flags.InvalidOnCPU) 
+        VFXGlobalsDefinition.Definition m_Definition;
+        public VFXExpressionGlobal(VFXGlobalsDefinition.Definition definition) : base(VFXExpression.Flags.PerElement | VFXExpression.Flags.InvalidOnCPU) 
         {
             m_Definition = definition;
         }
@@ -18,27 +17,27 @@ namespace UnityEditor.VFX.Includes
             {
                 switch (m_Definition.type)
                 {
-                    case VFXIncludeDefinition.IncludeMemberType.Float:
+                    case VFXGlobalsDefinition.MemberType.Float:
                         return VFXValueType.Float;
-                    case VFXIncludeDefinition.IncludeMemberType.Uint:
+                    case VFXGlobalsDefinition.MemberType.Uint:
                         return VFXValueType.Uint32;
-                    case VFXIncludeDefinition.IncludeMemberType.Int:
+                    case VFXGlobalsDefinition.MemberType.Int:
                         return VFXValueType.Int32;
-                    case VFXIncludeDefinition.IncludeMemberType.Bool:
+                    case VFXGlobalsDefinition.MemberType.Bool:
                         return VFXValueType.Boolean;
-                    case VFXIncludeDefinition.IncludeMemberType.Vector2:
+                    case VFXGlobalsDefinition.MemberType.Vector2:
                         return VFXValueType.Float2;
-                    case VFXIncludeDefinition.IncludeMemberType.Vector3:
+                    case VFXGlobalsDefinition.MemberType.Vector3:
                         return VFXValueType.Float3;
-                    case VFXIncludeDefinition.IncludeMemberType.Vector4:
+                    case VFXGlobalsDefinition.MemberType.Vector4:
                         return VFXValueType.Float4;
-                    case VFXIncludeDefinition.IncludeMemberType.Color:
+                    case VFXGlobalsDefinition.MemberType.Color:
                         return VFXValueType.Float4;
-                    case VFXIncludeDefinition.IncludeMemberType.Texture2D:
+                    case VFXGlobalsDefinition.MemberType.Texture2D:
                         return VFXValueType.Texture2D;
-                    case VFXIncludeDefinition.IncludeMemberType.Texture3D:
+                    case VFXGlobalsDefinition.MemberType.Texture3D:
                         return VFXValueType.Texture3D;
-                    case VFXIncludeDefinition.IncludeMemberType.TextureCube:
+                    case VFXGlobalsDefinition.MemberType.TextureCube:
                         return VFXValueType.TextureCube;
                     default:
                         throw new System.NotImplementedException();
