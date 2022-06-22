@@ -39,9 +39,12 @@ static partial class VFXGraphExtension
         Profiler.BeginSample("VFXGraphExtension.UpdateStatsUI");
         UpdateStatsUIElements();
         Profiler.EndSample();
-        Profiler.BeginSample("VFXGraphExtension.UpdateDebugInfo");
-        UpdateDebugInfo();
-        Profiler.EndSample();
+        if(window.graphView != null && window.graphView.controller != null && window.graphView.controller.model.asset != null)
+        {
+            Profiler.BeginSample("VFXGraphExtension.UpdateDebugInfo");
+            UpdateDebugInfo();
+            Profiler.EndSample();
+        }
     }
 
     static void OnKeyDown(KeyDownEvent e)

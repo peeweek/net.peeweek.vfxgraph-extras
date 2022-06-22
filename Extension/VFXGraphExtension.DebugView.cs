@@ -18,7 +18,6 @@ static partial class VFXGraphExtension //.DebugView
         set { EditorPrefs.SetBool("VFXGraphExtension.debugInfoVisible", value); }
     }
 
-    static List<string> names = new List<string>();
     static List<SpawnerDebugInfo> spawnersToDelete = new List<SpawnerDebugInfo>();
     static List<SystemDebugInfo> systemsToDelete = new List<SystemDebugInfo>();
 
@@ -72,7 +71,7 @@ static partial class VFXGraphExtension //.DebugView
             return;
 
         var gv = wnd.graphView;
-        if (gv == null)
+        if (gv == null || gv.controller == null || gv.controller.model == null)
             return;
 
         if (spawnerDebugInfos == null)
@@ -80,6 +79,16 @@ static partial class VFXGraphExtension //.DebugView
 
         if (systemDebugInfos == null)
             systemDebugInfos = new List<SystemDebugInfo>();
+
+        // Check if asset changed
+        VisualEffectAsset currentAsset = VFXViewWindow.currentWindow.graphView.controller.model.asset;
+
+        if (currentAsset != m_CurrentVisualEffectAsset)
+        {
+            spawnerDebugInfos.Clear();
+            systemDebugInfos.Clear();
+            m_CurrentVisualEffectAsset = currentAsset;
+        }
 
         gv.Query<VFXContextUI>().Build().ForEach((context) =>
         {
@@ -339,12 +348,21 @@ static partial class VFXGraphExtension //.DebugView
         });
     }
 
+    static VisualEffectAsset m_CurrentVisualEffectAsset;
+    static List<string> m_SystemNames = new List<string>();
+    static List<string> m_SpawnerNames = new List<string>();
+
     static void UpdateDebugInfo()
     {
         if (spawnerDebugInfos == null || systemDebugInfos == null)
             return;
-
+ 
         VisualEffect vfx = VFXViewWindow.currentWindow.graphView.attachedComponent;
+
+        if (m_SystemNames == null)
+            m_SystemNames = new List<string>();
+        if (m_SpawnerNames == null)
+            m_SpawnerNames = new List<string>();
 
         foreach (var debugInfo in spawnerDebugInfos)
         {
@@ -371,14 +389,9 @@ static partial class VFXGraphExtension //.DebugView
                 }
 
                 debugInfo.ResyncName();
-
-
-                vfx.GetSpawnSystemNames(names);
-                if (!names.Contains(debugInfo.name))
-                {
-                    // should not happen
+                vfx.GetSpawnSystemNames(m_SpawnerNames);
+                if (!m_SpawnerNames.Contains(debugInfo.name))
                     continue;
-                }
 
                 var spawnerInfo = vfx.GetSpawnSystemInfo(debugInfo.name);
                 if (spawnerInfo == null)
@@ -552,9 +565,12 @@ on the stop input, or exhausting its loops";
             var capacity = (uint)data.GetSetting("capacity").value;
             var layout = data.GetCurrentAttributeLayout();
 
-
             if (vfx != null) // attached
             {
+                vfx.GetSystemNames(m_SystemNames);
+                if (!m_SystemNames.Contains(systemName))
+                    continue;
+
                 var vfxSystemInfo = vfx.GetParticleSystemInfo(systemName);
                 uint aliveCount = vfxSystemInfo.aliveCount;
                 float t = (float)aliveCount / capacity;
