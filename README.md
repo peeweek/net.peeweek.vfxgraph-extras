@@ -42,6 +42,44 @@ The VFXGraph Extension provides a menu with additional UI and functionality feat
 
 ![](https://raw.githubusercontent.com/peeweek/net.peeweek.vfxgraph-extras/master/Documentation%7E/VFXExtension.png)
 
+
+
+### Graph Debug Stats
+
+In the VFX Extension menu, you can toggle the Toggle Debug Stats menu entry to display additional information about particle systems and spawn systems. Many of these informations will require you to attach the graph window to a scene instance. 
+
+![](https://raw.githubusercontent.com/peeweek/net.peeweek.vfxgraph-extras/master/Documentation%7E/DebugStats.png)
+
+### Globals
+
+The globals feature enable users to define global shader data structures to be read from the graph, for example to use the player position in VFX Graphs without requiring to bind the values at the component level. 
+
+In order to read values, you need to create a VFX Globals definition asset, where you will reference an HLSL include (that you can generate/update as well using the inspector menu), and declare global values.
+
+![](https://raw.githubusercontent.com/peeweek/net.peeweek.vfxgraph-extras/master/Documentation%7E/Globals.png)
+
+Then, using the **Get Globals node** and the **Include Globals Block** (required for reading these values in a context), you can access the values set by the code. In order to set the values in monobehaviours, simply use the `Shader.SetGlobal...()` API. For example : 
+
+```csharp
+[ExecuteAlways]
+[RequireComponent(typeof(SphereCollider))]
+public class SetSphereGlobal : MonoBehaviour
+{
+    SphereCollider m_Collider;
+    private void OnEnable()
+    {
+        m_Collider = GetComponent<SphereCollider>();
+    }
+
+    private void Update()
+    {
+        Shader.SetGlobalVector("spherePosition", transform.position);
+        Shader.SetGlobalFloat("sphereRadius", m_Collider.radius * transform.localScale.x);
+
+    }
+}
+```
+
 ### Volume Mixer
 
 Volume Mixer provides a way to define custom properties in the project and blend them through the volume system.
@@ -77,8 +115,7 @@ VFX Template Gallery enables picking a starting point upon creating a new VFX Gr
 
 ### Custom Block
 
-Custom Block enables writing a block with custom HLSL code, providing input properties, random, and accessing particle attributes.
+Custom Block enables writing a block with custom HLSL code, providing input properties, random, and accessing particle attributes, and even custom attributes.
 
 ![](https://raw.githubusercontent.com/peeweek/net.peeweek.vfxgraph-extras/master/Documentation%7E/CustomBlock.png)
-
 
