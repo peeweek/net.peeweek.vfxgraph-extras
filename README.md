@@ -22,7 +22,9 @@ If not present, add this scoped registry:
 
 Once added, you can close the project settings window.
 
-Open Package manager (Window/Package Manager), select the **Visual Effect Graph (Extras)** package, and click the install button.
+![](https://raw.githubusercontent.com/peeweek/net.peeweek.vfxgraph-extras/master/Documentation%7E/PackageManager.png)
+
+Finally, Open Package manager (Window/Package Manager), select the **Visual Effect Graph (Extras)** package, and click the install button.
 
 ### Local Package
 
@@ -58,7 +60,7 @@ In order to read values, you need to create a VFX Globals definition asset, wher
 
 ![](https://raw.githubusercontent.com/peeweek/net.peeweek.vfxgraph-extras/master/Documentation%7E/Globals.png)
 
-Then, using the **Get Globals node** and the **Include Globals Block** (required for reading these values in a context), you can access the values set by the code. In order to set the values in monobehaviours, simply use the `Shader.SetGlobal...()` API. For example : 
+Then, using the **Get Globals node** and the **Include Globals** Block (required for reading these values in a context), you can access the values set by the code. In order to set the values in monobehaviours, simply use the `Shader.SetGlobal...()` API. For example : 
 
 ```csharp
 [ExecuteAlways]
@@ -75,7 +77,6 @@ public class SetSphereGlobal : MonoBehaviour
     {
         Shader.SetGlobalVector("spherePosition", transform.position);
         Shader.SetGlobalFloat("sphereRadius", m_Collider.radius * transform.localScale.x);
-
     }
 }
 ```
