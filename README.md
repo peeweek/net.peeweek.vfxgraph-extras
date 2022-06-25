@@ -4,7 +4,11 @@ Raw bunch of feature prototypes for use with Visual Effect Graph. These features
 
 ## Requirements
 
-* Unity 2020.3 / VFX Graph Package
+* VFX Graph Package
+* Unity
+  * 2020.3 > Working
+  * 2021.3 > Working
+  * 2022.X <-- Probably not (due to multi window edition)
 
 ## Installing
 
