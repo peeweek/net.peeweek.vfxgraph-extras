@@ -561,7 +561,7 @@ on the stop input, or exhausting its loops";
             }
 
             var systemModel = systemInfo.model.GetParent();
-            string systemName = data.title;
+            string systemName = systemModel.systemNames.GetUniqueSystemName(data);
             var capacity = (uint)data.GetSetting("capacity").value;
             var layout = data.GetCurrentAttributeLayout();
 
