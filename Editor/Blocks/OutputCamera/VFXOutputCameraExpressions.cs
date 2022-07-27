@@ -69,7 +69,30 @@ namespace UnityEditor.VFX
         public override VFXExpressionOperation operation => VFXExpressionOperation.None;
 
         public override string GetCodeString(string[] parents) => "_ProjectionParams.yz";
-
     }
+
+    class OutputCameraFovExpression : VFXExpression
+    {
+        public OutputCameraFovExpression() : base(VFXExpression.Flags.InvalidOnCPU) { }
+
+        public override VFXValueType valueType => VFXValueType.Float2;
+
+        public override VFXExpressionOperation operation => VFXExpressionOperation.None;
+
+        public override string GetCodeString(string[] parents) => "atan(1.0/unity_CameraProjection._m11)";
+    }
+
+    class OutputCameraRatioExpression : VFXExpression
+    {
+        public OutputCameraRatioExpression() : base(VFXExpression.Flags.InvalidOnCPU) { }
+
+        public override VFXValueType valueType => VFXValueType.Float2;
+
+        public override VFXExpressionOperation operation => VFXExpressionOperation.None;
+
+        public override string GetCodeString(string[] parents) => "_ScreenParams.x/_ScreenParams.y";
+    }
+
+
 }
 
