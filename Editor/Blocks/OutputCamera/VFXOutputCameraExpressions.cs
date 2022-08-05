@@ -79,7 +79,7 @@ namespace UnityEditor.VFX
 
         public override VFXExpressionOperation operation => VFXExpressionOperation.None;
 
-        public override string GetCodeString(string[] parents) => "atan(1.0/unity_CameraProjection._m11)";
+        public override string GetCodeString(string[] parents) => "atan(1.0/UNITY_MATRIX_P._m11)";
     }
 
     class OutputCameraRatioExpression : VFXExpression
@@ -92,7 +92,5 @@ namespace UnityEditor.VFX
 
         public override string GetCodeString(string[] parents) => "_ScreenParams.x/_ScreenParams.y";
     }
-
-
 }
 

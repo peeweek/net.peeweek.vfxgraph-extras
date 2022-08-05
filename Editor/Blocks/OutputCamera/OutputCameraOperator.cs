@@ -18,7 +18,7 @@ namespace UnityEditor.VFX
             public Vector2 Resolution;
             public Vector2 NearFarPlane;
             public float FieldOfView;
-            public float ratio;
+            public float Ratio;
         }
 
         protected override VFXExpression[] BuildExpression(VFXExpression[] inputExpression)
