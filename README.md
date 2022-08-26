@@ -124,3 +124,10 @@ Custom Block enables writing a block with custom HLSL code, providing input prop
 
 ![](https://raw.githubusercontent.com/peeweek/net.peeweek.vfxgraph-extras/master/Documentation%7E/CustomBlock.png)
 
+### Output Camera
+
+Output Camera provides values from the "Current Rendering Camera" that is used to render an output. It differs from the Camera nodes that target a single camera and thus are compatible with all contexts, as it will provide values per-rendering camera. General uses are to display screen-space particles on different cameras simultaneously.
+
+![](https://raw.githubusercontent.com/peeweek/net.peeweek.vfxgraph-extras/master/Documentation%7E/OutputCamera-Operators.png)
+
+![](https://raw.githubusercontent.com/peeweek/net.peeweek.vfxgraph-extras/master/Documentation%7E/OutputCamera-Block.png)
