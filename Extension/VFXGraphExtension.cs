@@ -138,6 +138,7 @@ static partial class VFXGraphExtension
                 m.AddSeparator("");
                 m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach);
                 m.AddItem(new GUIContent("Show Debug Stats"), debugInfoVisible, ToggleSpawnerStats);
+                m.AddItem(new GUIContent("Navigator"), navigatorVisible, ToggleNavigator);
                 m.ShowAsContext();
             }
 

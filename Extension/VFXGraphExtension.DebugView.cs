@@ -18,6 +18,12 @@ static partial class VFXGraphExtension //.DebugView
         set { EditorPrefs.SetBool("VFXGraphExtension.debugInfoVisible", value); }
     }
 
+    static bool navigatorVisible
+    {
+        get { return EditorPrefs.GetBool("VFXGraphExtension.navigatorVisible", true); }
+        set { EditorPrefs.SetBool("VFXGraphExtension.navigatorVisible", value); }
+    }
+
     static List<SpawnerDebugInfo> spawnersToDelete = new List<SpawnerDebugInfo>();
     static List<SystemDebugInfo> systemsToDelete = new List<SystemDebugInfo>();
 
@@ -58,10 +64,35 @@ static partial class VFXGraphExtension //.DebugView
     static List<SpawnerDebugInfo> spawnerDebugInfos;
     static List<SystemDebugInfo> systemDebugInfos;
 
+    static VFXNavigator m_Navigator;
+
     static void ToggleSpawnerStats()
     {
         debugInfoVisible = !debugInfoVisible;
         UpdateStatsUIElements();
+    }
+
+    static void ToggleNavigator()
+    {
+        navigatorVisible = !navigatorVisible;
+
+        if (m_Navigator == null)
+        {
+            m_Navigator = new VFXNavigator(VFXViewWindow.currentWindow);
+        }
+
+        var gv = VFXViewWindow.currentWindow.graphView;
+
+        if (navigatorVisible)
+        {
+            gv.Insert(gv.childCount - 1, m_Navigator);
+        }
+        else
+        {
+            m_Navigator.RemoveFromHierarchy();
+        }
+
+        
     }
 
     static void UpdateStatsUIElements()
