@@ -61,7 +61,7 @@ namespace UnityEditor.VFX.UI
                     {
                         var sysName = c.controller.model.GetParent().systemNames.GetUniqueSystemName(c.controller.model.GetData());
                         var contextName = c.controller.model.name;
-                        SelectButton(c, $"{sysName}/{contextName}");
+                        SelectButton(c, $"{sysName} > {contextName}");
                     }
                     GUILayout.Space(12);
                 }
@@ -71,9 +71,12 @@ namespace UnityEditor.VFX.UI
                     GUILayout.Label("Blocks", EditorStyles.boldLabel);
                     foreach (var b in blocks)
                     {
+                        var context = b.controller.model.GetParent();
+                        var sysName = context.GetParent().systemNames.GetUniqueSystemName(context.GetData());
+
                         var contextName = b.controller.model.GetParent().name;
                         var blockName = b.title;
-                        SelectButton(b, $"{contextName}/{blockName}");
+                        SelectButton(b, $"{sysName} > {contextName} > {blockName}");
                     }
                     GUILayout.Space(12);
                 }
