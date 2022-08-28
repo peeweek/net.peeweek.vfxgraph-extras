@@ -9,7 +9,6 @@ namespace UnityEditor.VFX.UI
     internal class VFXNavigator : Blackboard
     {
         VFXView m_View;
-
         string searchString = string.Empty;
 
         internal VFXNavigator(VFXViewWindow window)
@@ -18,12 +17,12 @@ namespace UnityEditor.VFX.UI
 
             IMGUIContainer contents = new IMGUIContainer(OnGUI);
             Add(contents);
-            
             this.AddManipulator(new Dragger { clampToParentEdges = true });
             this.title = "Navigator";
             this.subTitle = string.Empty;
             this.scrollable = true;
         }
+
 
         void SelectButton(VFXNodeUI node, string label)
         {
@@ -37,6 +36,8 @@ namespace UnityEditor.VFX.UI
 
         void OnGUI()
         {
+            UpdateSearch();
+
             using(new GUILayout.HorizontalScope(EditorStyles.toolbar))
             {
                 EditorGUI.BeginChangeCheck();
@@ -58,7 +59,7 @@ namespace UnityEditor.VFX.UI
                     GUILayout.Label("Contexts", EditorStyles.boldLabel);
                     foreach(var c in contexts)
                     {
-                        var sysName = c.controller.model.GetData().title;
+                        var sysName = c.controller.model.GetParent().systemNames.GetUniqueSystemName(c.controller.model.GetData());
                         var contextName = c.controller.model.name;
                         SelectButton(c, $"{sysName}/{contextName}");
                     }
@@ -79,7 +80,7 @@ namespace UnityEditor.VFX.UI
 
                 if(nodes.Count > 0)
                 {
-                    GUILayout.Label("Nodes", EditorStyles.boldLabel);
+                    GUILayout.Label("Operators", EditorStyles.boldLabel);
                     foreach (var n in nodes)
                     {
                         var nodeName = n.title;
@@ -109,7 +110,8 @@ namespace UnityEditor.VFX.UI
             {
                 if(Contains(n.title,s))
                 {
-                    nodes.Add(n);
+                    if(n is VFXOperatorUI)
+                        nodes.Add(n);
                 }
             }
 
@@ -154,11 +156,6 @@ namespace UnityEditor.VFX.UI
         }
 
         public void OnStartResize()
-        {
-
-        }
-
-        void Rebuild()
         {
 
         }
