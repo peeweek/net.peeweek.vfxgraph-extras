@@ -58,15 +58,15 @@ static partial class VFXGraphExtension //.DebugView
     static List<SpawnerDebugInfo> spawnerDebugInfos;
     static List<SystemDebugInfo> systemDebugInfos;
 
-    static void ToggleSpawnerStats()
+    static void ToggleSpawnerStats(object window)
     {
+        VFXViewWindow wnd = (VFXViewWindow)window;
         debugInfoVisible = !debugInfoVisible;
-        UpdateStatsUIElements();
+        UpdateStatsUIElements(wnd);
     }
 
-    static void UpdateStatsUIElements()
+    static void UpdateStatsUIElements(VFXViewWindow wnd)
     {
-        var wnd = VFXViewWindow.currentWindow;
         if (wnd == null)
             return;
 
@@ -81,7 +81,7 @@ static partial class VFXGraphExtension //.DebugView
             systemDebugInfos = new List<SystemDebugInfo>();
 
         // Check if asset changed
-        VisualEffectAsset currentAsset = VFXViewWindow.currentWindow.graphView.controller.model.asset;
+        VisualEffectAsset currentAsset = wnd.graphView.controller.model.asset;
 
         if (currentAsset != m_CurrentVisualEffectAsset)
         {
@@ -352,12 +352,12 @@ static partial class VFXGraphExtension //.DebugView
     static List<string> m_SystemNames = new List<string>();
     static List<string> m_SpawnerNames = new List<string>();
 
-    static void UpdateDebugInfo()
+    static void UpdateDebugInfo(VFXViewWindow wnd)
     {
         if (spawnerDebugInfos == null || systemDebugInfos == null)
             return;
  
-        VisualEffect vfx = VFXViewWindow.currentWindow.graphView.attachedComponent;
+        VisualEffect vfx = wnd.graphView.attachedComponent;
 
         if (m_SystemNames == null)
             m_SystemNames = new List<string>();

@@ -20,18 +20,19 @@ namespace UnityEditor.VFX
         bool debug = false;
         Vector2 addPosition;
 
-        public static void OpenWindowCreateAsset(string outPath)
+        internal static void OpenWindowCreateAsset(string outPath)
         {
             var window = GetWindow<VFXGraphGalleryWindow>(true, "Create New VFX Asset", true);
             window.outPath = outPath;
             window.mode = WindowMode.CreateAsset;
         }
 
-        public static void OpenWindowAddTemplate(Vector2 addPosition)
+        internal static void OpenWindowAddTemplate(Vector2 addPosition, VFXViewWindow vfxWindow)
         {
             var window = GetWindow<VFXGraphGalleryWindow>(true, $"Create New System from Template", true);
             window.mode = WindowMode.AddNode;
             window.addPosition = addPosition;
+            vfxInvokingWindow = vfxWindow;
         }
 
         private void OnEnable()
@@ -51,7 +52,7 @@ namespace UnityEditor.VFX
         Vector2 scroll;
         Vector2 scrollDesc;
 
-
+        static VFXViewWindow vfxInvokingWindow;
         List<VFXGraphGalleryTemplate> categories;
 
         VFXGraphGalleryTemplate.Template selected;
@@ -70,7 +71,6 @@ namespace UnityEditor.VFX
                 EditorPrefs.SetBool("VFXGraphGalleryWindow.createGameObject", value);
             }
         }
-
 
         void UpdateTemplates()
         {
@@ -251,7 +251,8 @@ namespace UnityEditor.VFX
 
                     if (GUILayout.Button("Add System", GUILayout.Width(100), GUILayout.Height(22)) || pressedReturn)
                     {
-                        VFXViewWindow.currentWindow.graphView.CreateTemplateSystem(AssetDatabase.GetAssetPath(selectedSource), addPosition, null);
+                        vfxInvokingWindow.graphView.CreateTemplateSystem(AssetDatabase.GetAssetPath(selectedSource), addPosition, null);
+                        vfxInvokingWindow = null;
                         Close();
                     }
                     EditorGUI.EndDisabledGroup();
