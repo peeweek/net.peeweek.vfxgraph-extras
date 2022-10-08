@@ -23,7 +23,7 @@ public partial class VFXGraphExtension //.Navigator
 
     public static Rect NavigatorLoadPosition(Rect defaultPosition)
     {
-        string str = EditorPrefs.GetString(kNavigatorRectPreferenceName);
+        string str = EditorPrefs.GetString(kNavigatorRectPreferenceName, "32,32,200,200");
 
         Rect position = defaultPosition;
         if (!string.IsNullOrEmpty(str))
@@ -41,6 +41,10 @@ public partial class VFXGraphExtension //.Navigator
                     position = new Rect(x, y, width, height);
                 }
             }
+        }
+        else
+        {
+            NavigatorSavePosition(defaultPosition);
         }
 
         return position;
