@@ -12,10 +12,14 @@ using System.Text;
 
 static partial class VFXGraphExtension //.DebugView
 {
-    static bool debugInfoVisible
+    static bool GetDebugInfoVisible(VisualEffectAsset asset)
     {
-        get { return EditorPrefs.GetBool("VFXGraphExtension.debugInfoVisible", true); }
-        set { EditorPrefs.SetBool("VFXGraphExtension.debugInfoVisible", value); }
+        return EditorPrefs.GetBool($"VFXGraphExtension.debugInfoVisible.{asset.name}", true);
+    }
+
+    static void SetDebugInfoVisible(VisualEffectAsset asset, bool visible)
+    {
+        EditorPrefs.SetBool($"VFXGraphExtension.debugInfoVisible.{asset.name}", visible);
     }
 
     static List<SpawnerDebugInfo> spawnersToDelete = new List<SpawnerDebugInfo>();
@@ -55,39 +59,60 @@ static partial class VFXGraphExtension //.DebugView
         public Label memoryLabel;
     }
 
-    static List<SpawnerDebugInfo> spawnerDebugInfos;
-    static List<SystemDebugInfo> systemDebugInfos;
+    static Dictionary<VFXViewWindow, List<SpawnerDebugInfo>> spawnerDebugInfos;
+    static Dictionary<VFXViewWindow, List<SystemDebugInfo>> systemDebugInfos;
+    static Dictionary<VFXViewWindow, VisualEffectAsset> currentVisualEffectAsset;
 
-    static void ToggleSpawnerStats(object window)
+    static Dictionary<VisualEffectAsset, List<string>> systemNames = new Dictionary<VisualEffectAsset, List<string>>();
+    static Dictionary<VisualEffectAsset, List<string>> spawnerNames = new Dictionary<VisualEffectAsset, List<string>>();
+
+    static void ToggleSpawnerStats(object wnd)
     {
-        VFXViewWindow wnd = (VFXViewWindow)window;
-        debugInfoVisible = !debugInfoVisible;
-        UpdateStatsUIElements(wnd);
+        VFXViewWindow window = (VFXViewWindow)wnd;
+        var asset = window.displayedResource.asset;
+
+        if(asset != null)
+        {
+            bool visible = !GetDebugInfoVisible(asset);
+            SetDebugInfoVisible(asset, visible);
+            UpdateStatsUIElements(window);
+        }
     }
 
-    static void UpdateStatsUIElements(VFXViewWindow wnd)
+    static void UpdateStatsUIElements(VFXViewWindow window)
     {
-        if (wnd == null)
+        if (window == null)
             return;
 
-        var gv = wnd.graphView;
+        var gv = window.graphView;
         if (gv == null || gv.controller == null || gv.controller.model == null)
             return;
 
         if (spawnerDebugInfos == null)
-            spawnerDebugInfos = new List<SpawnerDebugInfo>();
+            spawnerDebugInfos = new Dictionary<VFXViewWindow, List<SpawnerDebugInfo>>();
 
         if (systemDebugInfos == null)
-            systemDebugInfos = new List<SystemDebugInfo>();
+            systemDebugInfos = new Dictionary<VFXViewWindow, List<SystemDebugInfo>>();
+
+        if (currentVisualEffectAsset == null)
+            currentVisualEffectAsset = new Dictionary<VFXViewWindow, VisualEffectAsset>();
 
         // Check if asset changed
-        VisualEffectAsset currentAsset = wnd.graphView.controller.model.asset;
+        VisualEffectAsset currentAsset = window.graphView.controller.model.asset;
 
-        if (currentAsset != m_CurrentVisualEffectAsset)
+        // If window was not registered, register it
+        if(!currentVisualEffectAsset.ContainsKey(window))
         {
-            spawnerDebugInfos.Clear();
-            systemDebugInfos.Clear();
-            m_CurrentVisualEffectAsset = currentAsset;
+            currentVisualEffectAsset.Add(window, currentAsset);
+            spawnerDebugInfos.Add(window, new List<SpawnerDebugInfo>());
+            systemDebugInfos.Add(window, new List<SystemDebugInfo>());
+        }
+
+        if (currentAsset != currentVisualEffectAsset[window])
+        {
+            spawnerDebugInfos[window].Clear();
+            systemDebugInfos[window].Clear();
+            currentVisualEffectAsset[window] = currentAsset;
         }
 
         gv.Query<VFXContextUI>().Build().ForEach((context) =>
@@ -96,7 +121,7 @@ static partial class VFXGraphExtension //.DebugView
             {
                 string name = context.Q<Label>("user-label").text;
 
-                if (spawnerDebugInfos.Any(o => o.ui == context))
+                if (spawnerDebugInfos[window].Any(o => o.ui == context))
                     return;
 
                 SpawnerDebugInfo info = new SpawnerDebugInfo();
@@ -222,14 +247,14 @@ static partial class VFXGraphExtension //.DebugView
                     info.debugPanel = panel;
                     info.evtAttribute = evtAttribute;
 
-                    spawnerDebugInfos.Add(info);
+                    spawnerDebugInfos[window].Add(info);
                 }
 
                 info.debugPanel = panel;
             }
             else if (context.ClassListContains("init"))
             {
-                if (systemDebugInfos.Any(o => o.ui == context))
+                if (systemDebugInfos[window].Any(o => o.ui == context))
                     return;
 
                 var model = context.controller.model;
@@ -342,29 +367,29 @@ static partial class VFXGraphExtension //.DebugView
                     info.countLabel = countLabel;
                     info.progress = progress;
 
-                    systemDebugInfos.Add(info);
+                    systemDebugInfos[window].Add(info);
                 }
             }
         });
     }
 
-    static VisualEffectAsset m_CurrentVisualEffectAsset;
-    static List<string> m_SystemNames = new List<string>();
-    static List<string> m_SpawnerNames = new List<string>();
 
-    static void UpdateDebugInfo(VFXViewWindow wnd)
+    static void UpdateDebugInfo(VFXViewWindow window)
     {
         if (spawnerDebugInfos == null || systemDebugInfos == null)
             return;
  
-        VisualEffect vfx = wnd.graphView.attachedComponent;
+        VisualEffect vfx = window.graphView.attachedComponent;
+        VisualEffectAsset asset = window.displayedResource.asset;
 
-        if (m_SystemNames == null)
-            m_SystemNames = new List<string>();
-        if (m_SpawnerNames == null)
-            m_SpawnerNames = new List<string>();
+        if (!systemNames.ContainsKey(asset))
+            systemNames.Add(asset, new List<string>());
+        if (!spawnerNames.ContainsKey(asset))
+            spawnerNames.Add(asset, new List<string>());
 
-        foreach (var debugInfo in spawnerDebugInfos)
+        bool debugInfoVisible = GetDebugInfoVisible(asset);
+
+        foreach (var debugInfo in spawnerDebugInfos[window])
         {
             debugInfo.debugPanel.visible = debugInfoVisible;
             if (!debugInfoVisible)
@@ -389,8 +414,9 @@ static partial class VFXGraphExtension //.DebugView
                 }
 
                 debugInfo.ResyncName();
-                vfx.GetSpawnSystemNames(m_SpawnerNames);
-                if (!m_SpawnerNames.Contains(debugInfo.name))
+
+                vfx.GetSpawnSystemNames(spawnerNames[asset]);
+                if (!spawnerNames[asset].Contains(debugInfo.name))
                     continue;
 
                 var spawnerInfo = vfx.GetSpawnSystemInfo(debugInfo.name);
@@ -530,12 +556,11 @@ on the stop input, or exhausting its loops";
         }
 
         foreach (var info in spawnersToDelete)
-            spawnerDebugInfos.Remove(info);
+            spawnerDebugInfos[window].Remove(info);
 
         spawnersToDelete.Clear();
 
-
-        foreach (var systemInfo in systemDebugInfos)
+        foreach (var systemInfo in systemDebugInfos[window])
         {
             systemInfo.panel.visible = debugInfoVisible;
             if (!debugInfoVisible)
@@ -567,15 +592,15 @@ on the stop input, or exhausting its loops";
 
             if (vfx != null) // attached
             {
-                vfx.GetSystemNames(m_SystemNames);
-                if (!m_SystemNames.Contains(systemName))
+                vfx.GetSystemNames(systemNames[asset]);
+                if (!systemNames[asset].Contains(systemName))
                     continue;
 
                 var vfxSystemInfo = vfx.GetParticleSystemInfo(systemName);
                 uint aliveCount = vfxSystemInfo.aliveCount;
-                float t = (float)aliveCount / capacity;
+                float t = (float)Mathf.Min(aliveCount,capacity)/ capacity;
                 systemInfo.countLabel.text = $"{vfxSystemInfo.aliveCount.ToString("N0")} / {capacity.ToString("N0")}";
-                systemInfo.progress.style.width = t * 240;
+                systemInfo.progress.style.width = Mathf.Clamp01(t) * 240;
 
                 if (t > 0.75f)
                     systemInfo.progress.style.backgroundColor = Styles.sysInfoGreen;
@@ -627,7 +652,7 @@ on the stop input, or exhausting its loops";
         }
 
         foreach (var info in systemsToDelete)
-            systemDebugInfos.Remove(info);
+            systemDebugInfos[window].Remove(info);
 
         systemsToDelete.Clear();
 

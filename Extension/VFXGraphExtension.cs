@@ -146,10 +146,12 @@ static partial class VFXGraphExtension
             }
             else
             {
+                m.AddDisabledItem(this.window.titleContent, false);
+                m.AddSeparator("");
                 m.AddItem(new GUIContent("Add System from Template... (T)"), false, OpenAddCreateWindowScreenCenter, this.window);
                 m.AddSeparator("");
                 m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach, this.window);
-                m.AddItem(new GUIContent("Show Debug Stats"), debugInfoVisible, ToggleSpawnerStats, this.window);
+                m.AddItem(new GUIContent("Show Debug Stats"), GetDebugInfoVisible(window.displayedResource.asset), ToggleSpawnerStats, this.window);
                 m.ShowAsContext();
             }
 
