@@ -17,20 +17,62 @@ namespace UnityEditor.VFX.UI
 
             IMGUIContainer contents = new IMGUIContainer(OnGUI);
             Add(contents);
-            this.AddManipulator(new Dragger { clampToParentEdges = true });
             this.title = "Navigator";
             this.subTitle = string.Empty;
             this.scrollable = true;
         }
 
+        public override void UpdatePresenterPosition()
+        {
+            var position = this.GetPosition();
+            if (position.y < 32)
+            {
+                position.y = 32;
+                SetPosition(position);
+            }
+
+            base.UpdatePresenterPosition();
+        }
 
         void SelectButton(VFXNodeUI node, string label)
         {
-            if(GUILayout.Button(label, Styles.button))
+            using(new GUILayout.HorizontalScope())
             {
-                m_View.ClearSelection();
-                m_View.AddToSelection(node);
-                m_View.FrameSelection();
+                GUILayout.Space(16);
+                if (GUILayout.Button(label, Styles.button))
+                {
+                    m_View.ClearSelection();
+                    m_View.AddToSelection(node);
+                    m_View.FrameSelection();
+                }
+            }
+
+
+        }
+
+        void EventButton(VFXContextUI context, VFXBasicEvent evt)
+        {
+            using (new GUILayout.HorizontalScope())
+            {
+                GUILayout.Space(16);
+                if (GUILayout.Button(evt.eventName, Styles.button))
+                {
+                    m_View.ClearSelection();
+                    m_View.AddToSelection(context);
+                    m_View.FrameSelection();
+                }
+                if (GUILayout.Button(">", Styles.button, GUILayout.Width(16)))
+                {
+                    FireEvent(evt.eventName);
+                }
+            }
+        }
+
+        void FireEvent(string eventName)
+        {
+            if(m_View.attachedComponent != null)
+            {
+                m_View.attachedComponent.SendEvent(eventName);
             }
         }
 
@@ -48,62 +90,98 @@ namespace UnityEditor.VFX.UI
                 }
             }
 
-            if(string.IsNullOrEmpty(searchString))
+            if(events.Count > 0)
             {
-                EditorGUILayout.HelpBox("Please enter a search string", MessageType.Info);
+                GUILayout.Label("Events");
+                foreach(var e in events)
+                {
+                    VFXBasicEvent evt = e.controller.model as VFXBasicEvent;
+                    EventButton(e, evt);
+                }
             }
-            else
+
+            if(systems.Count > 0)
             {
-                if(contexts.Count > 0)
+                GUILayout.Label("Systems");
+                foreach(var c in systems)
                 {
-                    GUILayout.Label("Contexts", EditorStyles.boldLabel);
-                    foreach(var c in contexts)
-                    {
-                        var sysName = c.controller.model.GetParent().systemNames.GetUniqueSystemName(c.controller.model.GetData());
-                        var contextName = c.controller.model.name;
-                        SelectButton(c, $"{sysName} > {contextName}");
-                    }
-                    GUILayout.Space(12);
+                    var sysName = c.controller.model.GetParent().systemNames.GetUniqueSystemName(c.controller.model.GetData());
+                    SelectButton(c, $"{sysName} ({c.controller.model.GetData().type})");
                 }
+            }
 
-                if(blocks.Count > 0)
+            if(contexts.Count > 0)
+            {
+                GUILayout.Label("Contexts", EditorStyles.boldLabel);
+                foreach(var c in contexts)
                 {
-                    GUILayout.Label("Blocks", EditorStyles.boldLabel);
-                    foreach (var b in blocks)
-                    {
-                        var context = b.controller.model.GetParent();
-                        var sysName = context.GetParent().systemNames.GetUniqueSystemName(context.GetData());
+                    VFXModel context;
+                    if(c.controller.model is VFXBasicSpawner)
+                        context = c.controller.model;
+                    else
+                        context = c.controller.model.GetData();
 
-                        var contextName = b.controller.model.GetParent().name;
-                        var blockName = b.title;
-                        SelectButton(b, $"{sysName} > {contextName} > {blockName}");
-                    }
-                    GUILayout.Space(12);
+                    string sysName = c.controller.model.GetParent().systemNames.GetUniqueSystemName(context);
+
+                    var contextName = c.controller.model.name;
+                    SelectButton(c, $"{sysName} > {contextName}");
                 }
+                GUILayout.Space(12);
+            }
 
-                if(nodes.Count > 0)
+            if(blocks.Count > 0)
+            {
+                GUILayout.Label("Blocks", EditorStyles.boldLabel);
+                foreach (var b in blocks)
                 {
-                    GUILayout.Label("Operators", EditorStyles.boldLabel);
-                    foreach (var n in nodes)
-                    {
-                        var nodeName = n.title;
-                        SelectButton(n, $"{nodeName}");
-                    }
-                    GUILayout.Space(12);
+                    VFXModel context;
+                    if(b.controller.model.GetParent() is VFXBasicSpawner)
+                        context = b.controller.model.GetParent();
+                    else
+                        context = b.controller.model.GetParent().GetData();
+
+                    var sysName = b.controller.model.GetParent().GetParent().systemNames.GetUniqueSystemName(context);
+
+                    var contextName = b.controller.model.GetParent().name;
+                    var blockName = b.title;
+                    SelectButton(b, $"{sysName} > {contextName} > {blockName}");
                 }
+                GUILayout.Space(12);
+            }
+
+            if(nodes.Count > 0)
+            {
+                GUILayout.Label("Operators", EditorStyles.boldLabel);
+                foreach (var n in nodes)
+                {
+                    var nodeName = n.title;
+                    SelectButton(n, $"{nodeName}");
+                }
+                GUILayout.Space(12);
             }
         }
 
         List<VFXNodeUI> nodes;
+        List<VFXContextUI> events;
+        List<VFXContextUI> systems;
         List<VFXContextUI> contexts;
         List<VFXBlockUI> blocks;
 
-        void UpdateSearch()
+
+        bool Filter(string name, string searchString)
         {
             if (string.IsNullOrEmpty(searchString))
-                return;
+                return true;
 
+            else
+                return Contains(name.ToLower(), searchString);
+        }
+
+        void UpdateSearch()
+        {
             if (nodes == null) nodes = new List<VFXNodeUI>(); else nodes.Clear();
+            if (events == null) events = new List<VFXContextUI>(); else events.Clear();
+            if (systems == null) systems = new List<VFXContextUI>(); else systems.Clear();
             if (contexts == null) contexts = new List<VFXContextUI>(); else contexts.Clear();
             if (blocks == null) blocks = new List<VFXBlockUI>(); else blocks.Clear();
 
@@ -120,14 +198,25 @@ namespace UnityEditor.VFX.UI
 
             foreach(var c in m_View.GetAllContexts())
             {
-                if(Contains(c.controller.model.name.ToLower(),s))
+                if(c.controller.model is VFXBasicEvent && Filter((c.controller.model as VFXBasicEvent).eventName,s))
+                {
+                    events.Add(c);
+                    continue;
+                }
+
+                if (c.controller.model.contextType == VFXContextType.Init && Filter(c.controller.model.GetParent().systemNames.GetUniqueSystemName(c.controller.model.GetData()), s))
+                {
+                    systems.Add(c);
+                }
+
+                if(Filter(c.controller.model.name,s))
                 {
                     contexts.Add(c);
                 }
 
                 foreach(var b in c.GetAllBlocks())
                 {
-                    if(Contains(b.title,s))
+                    if(Filter(b.title,s))
                     {
                         blocks.Add(b);
                     }
