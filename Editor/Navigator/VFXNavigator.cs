@@ -339,10 +339,10 @@ namespace UnityEditor.VFX.UI
                 m_Root = new TreeViewItem(index++, -1);
 
                 // Root Categories
-                var eventRoot = new VFXNavigatorTreeViewItem(index++, 0, null, "Events");
-                var spawnSystemsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, "Spawn Systems");
-                var systemsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, "Systems");
-                var operatorsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, "Operators");
+                var eventRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.systemEventTypeIcon , "Events");
+                var spawnSystemsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.systemEventTypeIcon, "Spawn Systems");
+                var systemsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.systemParticleTypeIcon, "Systems");
+                var operatorsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.operatorTypeIcon, "Operators");
 
 
                 var allNodes = m_VFXView.GetAllNodes();
@@ -358,18 +358,18 @@ namespace UnityEditor.VFX.UI
                 events.Sort((n, m) => string.Compare((n.controller.model as VFXBasicEvent).eventName, (m.controller.model as VFXBasicEvent).eventName));
                 foreach (var e in events)
                 {
-                    eventRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, e, (e.controller.model as VFXBasicEvent).eventName));
+                    eventRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, e, Styles.contextEventTypeIcon, (e.controller.model as VFXBasicEvent).eventName));
                 }
 
                 // Find Spawn Contexts/Blocks
                 foreach(var context in allContexts.Where(c => c.controller.model is VFXBasicSpawner))
                 {
-                    var contextItem = new VFXNavigatorTreeViewItem(index++, 1, context, GetSpawnSystemName(context.controller.model as VFXBasicSpawner));
+                    var contextItem = new VFXNavigatorTreeViewItem(index++, 1, context, Styles.contextSpawnTypeIcon, GetSpawnSystemName(context.controller.model as VFXBasicSpawner));
 
                     var blocks = context.GetAllBlocks();
                     foreach(var block in blocks)
                     {
-                        contextItem.AddChild(new VFXNavigatorTreeViewItem(index++, 2, block));
+                        contextItem.AddChild(new VFXNavigatorTreeViewItem(index++, 2, block, Styles.blockTypeIcon));
                     }
 
                     spawnSystemsRoot.AddChild(contextItem);
@@ -435,13 +435,19 @@ namespace UnityEditor.VFX.UI
                 foreach(var systemName in systemsContextsBlocks.Keys.OrderBy(s=>s))
                 {
                     var contexts = systemsContextsBlocks[systemName];
-                    var systemItem = new VFXNavigatorTreeViewItem(index++, 1, null, systemName);
+                    var systemItem = new VFXNavigatorTreeViewItem(index++, 1, null, Styles.systemParticleTypeIcon, systemName);
                     foreach(var context in contexts.Keys.OrderBy(o => GetContextPriority(o)))
                     {
-                        var contextItem = new VFXNavigatorTreeViewItem(index++, 2, context);
+                        var icon = Styles.contextOutputTypeIcon;
+                        if (context.controller.model.taskType == VFXTaskType.Initialize)
+                            icon = Styles.contextInitializeTypeIcon;
+                        else if (context.controller.model.taskType == VFXTaskType.Update)
+                            icon = Styles.contextUpdateTypeIcon;
+
+                        var contextItem = new VFXNavigatorTreeViewItem(index++, 2, context, icon);
                         foreach (var block in context.GetAllBlocks())
                         {
-                            var blockItem = new VFXNavigatorTreeViewItem(index++, 3, block);
+                            var blockItem = new VFXNavigatorTreeViewItem(index++, 3, block, Styles.blockTypeIcon);
                             contextItem.AddChild(blockItem);
                         }
                         systemItem.AddChild(contextItem);
@@ -461,7 +467,7 @@ namespace UnityEditor.VFX.UI
                 operators.Sort((n,m) => string.Compare(n.title, m.title));
                 foreach(var n in operators)
                 {
-                    operatorsRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, n));
+                    operatorsRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, n, Styles.operatorTypeIcon));
                 }
 
                 m_Root.AddChild(eventRoot);
@@ -476,8 +482,21 @@ namespace UnityEditor.VFX.UI
             protected override void SingleClickedItem(int id)
             {
                 base.SingleClickedItem(id);
+            }
+
+            protected override void SelectionChanged(IList<int> selectedIds)
+            {
+                base.SelectionChanged(selectedIds);
+                if(selectedIds.Count > 0)
+                {
+                    Select(selectedIds[0]);
+                }
+            }
+
+            void Select(int id)
+            {
                 var item = FindItem(id, m_Root) as VFXNavigatorTreeViewItem;
-                if(item != null && item.nodeui != null)
+                if (item != null && item.nodeui != null)
                 {
                     m_Window.graphView.ClearSelection();
                     m_Window.graphView.AddToSelection(item.nodeui);
@@ -491,9 +510,10 @@ namespace UnityEditor.VFX.UI
         {
             public VFXNodeUI nodeui { get; private set; }
 
-            public VFXNavigatorTreeViewItem(int id, int depth, VFXNodeUI nodeui, string fallbackName = "") : base(id, depth, string.IsNullOrEmpty(fallbackName) ? nodeui.title : fallbackName)
+            public VFXNavigatorTreeViewItem(int id, int depth, VFXNodeUI nodeui, Texture2D icon, string fallbackName = "") : base(id, depth, string.IsNullOrEmpty(fallbackName) ? nodeui.title : fallbackName)
             {
                 this.nodeui = nodeui;
+                this.icon = icon;
             }
 
             public void SetParent(VFXNavigatorTreeViewItem item)
@@ -506,11 +526,34 @@ namespace UnityEditor.VFX.UI
         static class Styles
         {
             public static GUIStyle button;
+            public static Texture2D systemParticleTypeIcon;
+            public static Texture2D systemEventTypeIcon;
+            public static Texture2D contextEventTypeIcon;
+            public static Texture2D contextSpawnTypeIcon;
+            public static Texture2D contextInitializeTypeIcon;
+            public static Texture2D contextUpdateTypeIcon;
+            public static Texture2D contextOutputTypeIcon;
+            public static Texture2D contextTypeIcon;
+            public static Texture2D blockTypeIcon;
+            public static Texture2D operatorTypeIcon;
 
             static Styles()
             {
                 button = new GUIStyle(EditorStyles.miniButton);
                 button.alignment = TextAnchor.MiddleLeft;
+
+                systemParticleTypeIcon =    EditorGUIUtility.Load("Packages/net.peeweek.vfxgraph-extras/Editor/Icons/icons-system-particle.png") as Texture2D;
+                systemEventTypeIcon =       EditorGUIUtility.Load("Packages/net.peeweek.vfxgraph-extras/Editor/Icons/icons-system-spawnevent.png") as Texture2D;
+
+                contextEventTypeIcon =      EditorGUIUtility.Load("Packages/net.peeweek.vfxgraph-extras/Editor/Icons/icons-context-event.png") as Texture2D;
+                contextSpawnTypeIcon =      EditorGUIUtility.Load("Packages/net.peeweek.vfxgraph-extras/Editor/Icons/icons-context-spawn.png") as Texture2D;
+                contextInitializeTypeIcon = EditorGUIUtility.Load("Packages/net.peeweek.vfxgraph-extras/Editor/Icons/icons-context-initialize.png") as Texture2D;
+                contextUpdateTypeIcon =     EditorGUIUtility.Load("Packages/net.peeweek.vfxgraph-extras/Editor/Icons/icons-context-update.png") as Texture2D;
+                contextOutputTypeIcon =     EditorGUIUtility.Load("Packages/net.peeweek.vfxgraph-extras/Editor/Icons/icons-context-output.png") as Texture2D;
+
+                contextTypeIcon =     EditorGUIUtility.Load("Packages/net.peeweek.vfxgraph-extras/Editor/Icons/icons-type-context.png") as Texture2D;
+                blockTypeIcon =     EditorGUIUtility.Load("Packages/net.peeweek.vfxgraph-extras/Editor/Icons/icons-type-block.png") as Texture2D;
+                operatorTypeIcon =     EditorGUIUtility.Load("Packages/net.peeweek.vfxgraph-extras/Editor/Icons/icons-type-operator.png") as Texture2D;
             }
         }
     }
