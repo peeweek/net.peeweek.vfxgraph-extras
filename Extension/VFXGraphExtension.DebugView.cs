@@ -58,6 +58,7 @@ static partial class VFXGraphExtension //.DebugView
     static List<SpawnerDebugInfo> spawnerDebugInfos;
     static List<SystemDebugInfo> systemDebugInfos;
 
+
     static void ToggleSpawnerStats()
     {
         debugInfoVisible = !debugInfoVisible;
