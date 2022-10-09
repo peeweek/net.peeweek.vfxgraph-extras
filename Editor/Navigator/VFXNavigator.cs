@@ -144,6 +144,7 @@ namespace UnityEditor.VFX.UI
                 var eventRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.systemEventTypeIcon , "Events");
                 var spawnSystemsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.systemEventTypeIcon, "Spawn Systems");
                 var systemsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.systemParticleTypeIcon, "Systems");
+                var otherContexts = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.contextTypeIcon, "Other");
                 var operatorsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.operatorTypeIcon, "Operators");
                 var propertiesRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.operatorTypeIcon, "Properties");
                 var orphans = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.contextTypeIcon, "Orphans");
@@ -151,6 +152,15 @@ namespace UnityEditor.VFX.UI
 
                 var allNodes = m_VFXView.GetAllNodes();
                 var allContexts = m_VFXView.GetAllContexts();
+
+                string GetContextLabel(VFXContextUI context)
+                {
+                    string label = (context.Q("user-label") as Label)?.text;
+                    if (string.IsNullOrEmpty(label))
+                        return context.name;
+                    else
+                        return $"{label} ({context.controller.model.name})";
+                }
 
                 // Find Events
                 List<VFXContextUI> events = new List<VFXContextUI>();
@@ -177,8 +187,16 @@ namespace UnityEditor.VFX.UI
                     }
 
                     spawnSystemsRoot.AddChild(contextItem);
-
                 }
+
+                // Find Other Contexts
+                foreach (var context in allContexts.Where(c => c.controller.model is VFXStaticMeshOutput))
+                {
+                    string label = GetContextLabel(context);
+                    var contextItem = new VFXNavigatorTreeViewItem(index++, 1, context, Styles.contextOutputTypeIcon, label);
+                    otherContexts.AddChild(contextItem);
+                }
+
 
                 // Find Systems/Contexts/Blocks
                 Dictionary<string, Dictionary<VFXContextUI, List<VFXBlockUI>>> systemsContextsBlocks = new Dictionary<string, Dictionary<VFXContextUI, List<VFXBlockUI>>>();
@@ -208,7 +226,7 @@ namespace UnityEditor.VFX.UI
                         // Process Context if orphan
                         if (context.controller.model.GetData().GetAttributes().Count() == 0)
                         {
-                            var orphan = new VFXNavigatorTreeViewItem(index++, 1, context, Styles.contextTypeIcon);
+                            var orphan = new VFXNavigatorTreeViewItem(index++, 1, context, Styles.contextTypeIcon, GetContextLabel(context));
                             foreach (var block in context.GetAllBlocks())
                             {
                                 var blockItem = new VFXNavigatorTreeViewItem(index++, 3, block, Styles.blockTypeIcon);
@@ -267,7 +285,7 @@ namespace UnityEditor.VFX.UI
                         else if (context.controller.model.taskType == VFXTaskType.Update)
                             icon = Styles.contextUpdateTypeIcon;
 
-                        var contextItem = new VFXNavigatorTreeViewItem(index++, 2, context, icon);
+                        var contextItem = new VFXNavigatorTreeViewItem(index++, 2, context, icon, GetContextLabel(context));
                         foreach (var block in context.GetAllBlocks())
                         {
                             var blockItem = new VFXNavigatorTreeViewItem(index++, 3, block, Styles.blockTypeIcon);
@@ -316,7 +334,10 @@ namespace UnityEditor.VFX.UI
                 if(systemsRoot.hasChildren)
                     m_Root.AddChild(systemsRoot);
 
-                if(operatorsRoot.hasChildren)
+                if (otherContexts.hasChildren)
+                    m_Root.AddChild(otherContexts);
+
+                if (operatorsRoot.hasChildren)
                     m_Root.AddChild(operatorsRoot);
 
                 if (propertiesRoot.hasChildren)
