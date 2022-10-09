@@ -50,30 +50,42 @@ public partial class VFXGraphExtension //.Navigator
         return position;
     }
 
+    static Dictionary<VFXViewWindow, VFXNavigator> navigators = new Dictionary<VFXViewWindow, VFXNavigator>();
+    static Dictionary<VFXViewWindow, bool> navigatorVisibility = new Dictionary<VFXViewWindow, bool>();
 
-    static bool navigatorVisible
+    static void InitializeNavigator(VFXViewWindow window)
     {
-        get { return EditorPrefs.GetBool(kNavigatorVisiblePreferenceName, true); }
-        set { EditorPrefs.SetBool(kNavigatorVisiblePreferenceName, value); }
+        CreateNavigator(window);
+        SetNavigatorVisible(window, navigatorVisibility[window]);
     }
 
-    static VFXNavigator navigator;
-
-    static void ToggleNavigator()
+    static void CreateNavigator(VFXViewWindow window)
     {
-        navigatorVisible = !navigatorVisible;
-        SetNavigatorVisible(navigatorVisible);
-    }
-
-    static void SetNavigatorVisible(bool visible)
-    {
-        if (navigator == null)
+        if (!navigators.ContainsKey(window))
         {
-            navigator = new VFXNavigator(VFXViewWindow.currentWindow);
+            navigators.Add(window, new VFXNavigator(VFXViewWindow.currentWindow));
+            navigatorVisibility.Add(window, false);
         }
+    }
+
+    static void ToggleNavigatorMenu(object wnd)
+    {
+        ToggleNavigator(wnd as VFXViewWindow);
+    }
+
+    static void ToggleNavigator(VFXViewWindow window)
+    {
+        CreateNavigator(window);
+        navigatorVisibility[window] = !navigatorVisibility[window];
+        SetNavigatorVisible(window, navigatorVisibility[window]);
+    }
+
+    static void SetNavigatorVisible(VFXViewWindow window, bool visible)
+    {
+        CreateNavigator(window);
 
         var gv = VFXViewWindow.currentWindow.graphView;
-
+        var navigator = navigators[window];
         if (visible)
         {
             gv.Insert(gv.childCount - 1, navigator);
@@ -84,10 +96,9 @@ public partial class VFXGraphExtension //.Navigator
             NavigatorSavePosition(navigator.GetPosition());
             navigator.RemoveFromHierarchy();
         }
+
+        navigator.UpdatePresenterPosition();
     }
 
-    static void InitializeNavigator()
-    {
-        SetNavigatorVisible(navigatorVisible);
-    }
+
 }

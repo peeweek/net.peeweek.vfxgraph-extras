@@ -46,9 +46,9 @@ static partial class VFXGraphExtension
             Profiler.EndSample();
         }
 
-        if(navigator == null)
+        if(!navigators.ContainsKey(window))
         {
-            InitializeNavigator();
+            InitializeNavigator(window);
         }
     }
 
@@ -144,7 +144,7 @@ static partial class VFXGraphExtension
                 m.AddSeparator("");
                 m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach);
                 m.AddItem(new GUIContent("Show Debug Stats"), debugInfoVisible, ToggleSpawnerStats);
-                m.AddItem(new GUIContent("Navigator #N"), navigatorVisible, ToggleNavigator);
+                m.AddItem(new GUIContent("Navigator #N"), navigatorVisibility[VFXViewWindow.currentWindow], ToggleNavigatorMenu, VFXViewWindow.currentWindow);
                 m.ShowAsContext();
             }
         }
