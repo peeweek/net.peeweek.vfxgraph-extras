@@ -131,3 +131,9 @@ Output Camera provides values from the "Current Rendering Camera" that is used t
 ![](https://raw.githubusercontent.com/peeweek/net.peeweek.vfxgraph-extras/master/Documentation%7E/OutputCamera-Operators.png)
 
 ![](https://raw.githubusercontent.com/peeweek/net.peeweek.vfxgraph-extras/master/Documentation%7E/OutputCamera-Block.png)
+
+### Navigator
+
+![](https://user-images.githubusercontent.com/4037271/194754662-3e71045b-4707-4d5b-bcb8-11df5a0b3310.gif)
+
+Navigator handles populating and displaying contents of the graph as a tree view. You can filter it in order to search for nodes .
