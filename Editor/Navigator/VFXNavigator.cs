@@ -145,6 +145,8 @@ namespace UnityEditor.VFX.UI
                 var spawnSystemsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.systemEventTypeIcon, "Spawn Systems");
                 var systemsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.systemParticleTypeIcon, "Systems");
                 var operatorsRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.operatorTypeIcon, "Operators");
+                var propertiesRoot = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.operatorTypeIcon, "Properties");
+                var orphans = new VFXNavigatorTreeViewItem(index++, 0, null, Styles.contextTypeIcon, "Orphans");
 
 
                 var allNodes = m_VFXView.GetAllNodes();
@@ -182,7 +184,8 @@ namespace UnityEditor.VFX.UI
                 Dictionary<string, Dictionary<VFXContextUI, List<VFXBlockUI>>> systemsContextsBlocks = new Dictionary<string, Dictionary<VFXContextUI, List<VFXBlockUI>>>();
                 foreach(var context in allContexts) // Create All Systems
                 {
-                    if(context.controller.model.GetData() != null)
+                    var data = context.controller.model.GetData();
+                    if (data != null && data is VFXDataParticle)
                     {
                         string systemName = GetParticleSystemName(context.controller.model);
                         if(!systemsContextsBlocks.ContainsKey(systemName))
@@ -202,8 +205,17 @@ namespace UnityEditor.VFX.UI
                         ((inputType == VFXDataType.Particle || inputType == VFXDataType.ParticleStrip) && outputType == VFXDataType.None)
                         )
                     {
+                        // Process Context if orphan
                         if (context.controller.model.GetData().GetAttributes().Count() == 0)
-                            continue;
+                        {
+                            var orphan = new VFXNavigatorTreeViewItem(index++, 1, context, Styles.contextTypeIcon);
+                            foreach (var block in context.GetAllBlocks())
+                            {
+                                var blockItem = new VFXNavigatorTreeViewItem(index++, 3, block, Styles.blockTypeIcon);
+                                orphan.AddChild(blockItem);
+                            }
+                            orphans.AddChild(orphan);
+                        }
 
                         string systemName = GetParticleSystemName(context.controller.model);
                         systemsContextsBlocks[systemName].Add(context, new List<VFXBlockUI>());
@@ -268,12 +280,19 @@ namespace UnityEditor.VFX.UI
                 }
 
 
-                // Find Operators
+                // Find Operators / properties
                 List<VFXNodeUI> operators = new List<VFXNodeUI>();
+                List<VFXNodeUI> properties = new List<VFXNodeUI>();
                 foreach (var n in allNodes)
                 {
                     if (n is VFXOperatorUI)
+                    {
                         operators.Add(n);
+                    }
+                    else if(n is VFXParameterUI)
+                    {
+                        properties.Add(n);
+                    }
                 }
                 operators.Sort((n,m) => string.Compare(n.title, m.title));
                 foreach(var n in operators)
@@ -281,10 +300,31 @@ namespace UnityEditor.VFX.UI
                     operatorsRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, n, Styles.operatorTypeIcon));
                 }
 
-                m_Root.AddChild(eventRoot);
-                m_Root.AddChild(spawnSystemsRoot);
-                m_Root.AddChild(systemsRoot);
-                m_Root.AddChild(operatorsRoot);
+                properties.Sort((n, m) => string.Compare(n.title, m.title));
+                foreach (var p in properties)
+                {
+                    propertiesRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, p, Styles.operatorTypeIcon));
+                }
+
+
+                if (eventRoot.hasChildren)
+                    m_Root.AddChild(eventRoot);
+
+                if(spawnSystemsRoot.hasChildren)
+                    m_Root.AddChild(spawnSystemsRoot);
+
+                if(systemsRoot.hasChildren)
+                    m_Root.AddChild(systemsRoot);
+
+                if(operatorsRoot.hasChildren)
+                    m_Root.AddChild(operatorsRoot);
+
+                if (propertiesRoot.hasChildren)
+                    m_Root.AddChild(propertiesRoot);
+
+                if (orphans.hasChildren)
+                    m_Root.AddChild(orphans);
+
                 return m_Root;
             }
 
