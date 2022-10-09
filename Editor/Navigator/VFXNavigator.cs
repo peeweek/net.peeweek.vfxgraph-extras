@@ -58,22 +58,29 @@ namespace UnityEditor.VFX.UI
             base.UpdatePresenterPosition();
         }
 
+        bool needReloadNavigator = false;
+        private void M_Graph_onInvalidateDelegate(VFXModel model, VFXModel.InvalidationCause cause)
+        {
+            needReloadNavigator = true;
+        }
+
         void OnGUI()
         {
             if(window.graphView.controller == null) // No Asset
             {
                 EditorGUILayout.HelpBox("Please Load an asset first", MessageType.Info);
                 return;
-            }    
+            }
+
+            if (needReloadNavigator || m_TreeView == null)
+                ReloadNavigator();
 
             if (window.graphView.controller != null && m_Graph != window.graphView.controller.graph)
             {
-                if (m_Graph != null)
-                    window.graphView.controller.UnRegisterNotification(m_Graph, OnGraphChange);
-
                 m_Graph = window.graphView.controller.graph;
-                window.graphView.controller.RegisterNotification(m_Graph, OnGraphChange);
-                OnGraphChange();
+                m_Graph.onInvalidateDelegate += M_Graph_onInvalidateDelegate;
+
+                needReloadNavigator = true;
             }
 
             var position = this.GetPosition();
@@ -91,7 +98,7 @@ namespace UnityEditor.VFX.UI
             m_TreeView.OnGUI(GUILayoutUtility.GetRect(position.width-20, position.height -82));
         }
 
-        void OnGraphChange()
+        void ReloadNavigator()
         {
             if(m_TreeView == null)
             {
@@ -100,6 +107,7 @@ namespace UnityEditor.VFX.UI
             }
 
             m_TreeView.Reload();
+            needReloadNavigator = false;
         }
 
         class VFXNavigatorTreeView : TreeView
@@ -174,7 +182,7 @@ namespace UnityEditor.VFX.UI
                 Dictionary<string, Dictionary<VFXContextUI, List<VFXBlockUI>>> systemsContextsBlocks = new Dictionary<string, Dictionary<VFXContextUI, List<VFXBlockUI>>>();
                 foreach(var context in allContexts) // Create All Systems
                 {
-                    if(context.controller.model is VFXBasicInitialize)
+                    if(context.controller.model.GetData() != null)
                     {
                         string systemName = GetParticleSystemName(context.controller.model);
                         if(!systemsContextsBlocks.ContainsKey(systemName))
@@ -187,12 +195,16 @@ namespace UnityEditor.VFX.UI
                 {
                     var inputType = context.controller.model.inputType;
                     var outputType = context.controller.model.outputType;
+
                     if (
                         (outputType == VFXDataType.Particle) || 
                         (outputType == VFXDataType.ParticleStrip) || 
                         ((inputType == VFXDataType.Particle || inputType == VFXDataType.ParticleStrip) && outputType == VFXDataType.None)
                         )
                     {
+                        if (context.controller.model.GetData().GetAttributes().Count() == 0)
+                            continue;
+
                         string systemName = GetParticleSystemName(context.controller.model);
                         systemsContextsBlocks[systemName].Add(context, new List<VFXBlockUI>());
                         foreach(var block in context.GetAllBlocks())
@@ -229,9 +241,14 @@ namespace UnityEditor.VFX.UI
                 foreach(var systemName in systemsContextsBlocks.Keys.OrderBy(s=>s))
                 {
                     var contexts = systemsContextsBlocks[systemName];
+
+                    if (contexts.Count == 0)
+                        continue;
+
                     var systemItem = new VFXNavigatorTreeViewItem(index++, 1, null, Styles.systemParticleTypeIcon, systemName);
                     foreach(var context in contexts.Keys.OrderBy(o => GetContextPriority(o)))
                     {
+
                         var icon = Styles.contextOutputTypeIcon;
                         if (context.controller.model.taskType == VFXTaskType.Initialize)
                             icon = Styles.contextInitializeTypeIcon;
