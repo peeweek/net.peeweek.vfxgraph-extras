@@ -16,16 +16,17 @@ public partial class VFXGraphExtension //.Navigator
     const string kNavigatorVisiblePreferenceName = "VFXGraphExtension.navigatorVisible";
     const string kNavigatorRectPreferenceName = "VFXGraphExtension.navigatorRect";
 
+    static readonly Rect defaultNavigatorPosition = new Rect(16, 48, 180, 480);
+
     public static void NavigatorSavePosition(Rect r)
     {
         EditorPrefs.SetString(kNavigatorRectPreferenceName, string.Format(CultureInfo.InvariantCulture, "{0},{1},{2},{3}", r.x, r.y, r.width, r.height));
     }
 
-    public static Rect NavigatorLoadPosition(Rect defaultPosition)
+    public static Rect NavigatorLoadPosition()
     {
-        string str = EditorPrefs.GetString(kNavigatorRectPreferenceName, "32,32,200,200");
+        string str = EditorPrefs.GetString(kNavigatorRectPreferenceName);
 
-        Rect position = defaultPosition;
         if (!string.IsNullOrEmpty(str))
         {
             var rectValues = str.Split(',');
@@ -38,16 +39,17 @@ public partial class VFXGraphExtension //.Navigator
                     float.TryParse(rectValues[2], NumberStyles.Float, CultureInfo.InvariantCulture, out width) &&
                     float.TryParse(rectValues[3], NumberStyles.Float, CultureInfo.InvariantCulture, out height))
                 {
-                    position = new Rect(x, y, width, height);
+                    return new Rect(x, y, width, height);
                 }
             }
         }
         else
         {
-            NavigatorSavePosition(defaultPosition);
+            NavigatorSavePosition(defaultNavigatorPosition);
+            return defaultNavigatorPosition;
         }
 
-        return position;
+        return defaultNavigatorPosition;
     }
 
     static Dictionary<VFXViewWindow, VFXNavigator> navigators = new Dictionary<VFXViewWindow, VFXNavigator>();
@@ -63,7 +65,7 @@ public partial class VFXGraphExtension //.Navigator
     {
         if (!navigators.ContainsKey(window))
         {
-            navigators.Add(window, new VFXNavigator(VFXViewWindow.currentWindow));
+            navigators.Add(window, new VFXNavigator(VFXViewWindow.currentWindow, NavigatorLoadPosition()));
             navigatorVisibility.Add(window, false);
         }
     }
@@ -89,7 +91,7 @@ public partial class VFXGraphExtension //.Navigator
         if (visible)
         {
             gv.Insert(gv.childCount - 1, navigator);
-            navigator.SetPosition(NavigatorLoadPosition(new Rect(32, 32, 180, 480)));
+            navigator.SetPosition(NavigatorLoadPosition());
         }
         else
         {

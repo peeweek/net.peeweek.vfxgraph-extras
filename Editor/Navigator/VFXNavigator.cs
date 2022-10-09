@@ -18,7 +18,7 @@ namespace UnityEditor.VFX.UI
 
         string searchString = string.Empty;
 
-        internal VFXNavigator(VFXViewWindow window)
+        internal VFXNavigator(VFXViewWindow window, Rect position)
         {
             this.window = window;
             IMGUIContainer contents = new IMGUIContainer(OnGUI);
@@ -26,7 +26,7 @@ namespace UnityEditor.VFX.UI
             this.title = "Navigator";
             this.subTitle = "Navigate graph tree and select nodes";
             this.scrollable = true;
-            this.SetPosition(new Rect(0, 0, 240, 180));
+            this.SetPosition(position);
         }
 
         public override void UpdatePresenterPosition()
@@ -56,6 +56,8 @@ namespace UnityEditor.VFX.UI
                 SetPosition(position);
 
             base.UpdatePresenterPosition();
+
+            VFXGraphExtension.NavigatorSavePosition(position);
         }
 
         bool needReloadNavigator = false;
