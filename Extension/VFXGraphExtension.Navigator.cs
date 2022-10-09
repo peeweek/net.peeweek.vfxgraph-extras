@@ -13,10 +13,12 @@ using System.Globalization;
 
 public partial class VFXGraphExtension //.Navigator
 {
-    const string kNavigatorVisiblePreferenceName = "VFXGraphExtension.navigatorVisible";
+    const string kNavigatorVisiblePreferenceName = "VFXGraphExtension.navigatorVisible:";
     const string kNavigatorRectPreferenceName = "VFXGraphExtension.navigatorRect";
 
     static readonly Rect defaultNavigatorPosition = new Rect(16, 48, 180, 480);
+
+
 
     public static void NavigatorSavePosition(Rect r)
     {
@@ -57,16 +59,16 @@ public partial class VFXGraphExtension //.Navigator
 
     static void InitializeNavigator(VFXViewWindow window)
     {
-        CreateNavigator(window);
+        CreateNavigatorIfRequired(window);
         SetNavigatorVisible(window, navigatorVisibility[window]);
     }
 
-    static void CreateNavigator(VFXViewWindow window)
+    static void CreateNavigatorIfRequired(VFXViewWindow window)
     {
         if (!navigators.ContainsKey(window))
         {
             navigators.Add(window, new VFXNavigator(VFXViewWindow.currentWindow, NavigatorLoadPosition()));
-            navigatorVisibility.Add(window, false);
+            navigatorVisibility.Add(window, GetNavigatorVisible(window));
         }
     }
 
@@ -77,14 +79,26 @@ public partial class VFXGraphExtension //.Navigator
 
     static void ToggleNavigator(VFXViewWindow window)
     {
-        CreateNavigator(window);
+        CreateNavigatorIfRequired(window);
         navigatorVisibility[window] = !navigatorVisibility[window];
         SetNavigatorVisible(window, navigatorVisibility[window]);
     }
 
+    static bool GetNavigatorVisible(VFXViewWindow window)
+    {
+        var asset = window.graphView?.controller?.model?.visualEffectObject?.GetResource()?.asset;
+        if (asset != null)
+        {
+            var guid = AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(asset));
+            return EditorPrefs.GetBool(kNavigatorVisiblePreferenceName + guid.ToString(), false);
+        }
+        else 
+            return false;
+    }
+
     static void SetNavigatorVisible(VFXViewWindow window, bool visible)
     {
-        CreateNavigator(window);
+        CreateNavigatorIfRequired(window);
 
         var gv = VFXViewWindow.currentWindow.graphView;
         var navigator = navigators[window];
@@ -97,6 +111,14 @@ public partial class VFXGraphExtension //.Navigator
         {
             NavigatorSavePosition(navigator.GetPosition());
             navigator.RemoveFromHierarchy();
+        }
+
+        var asset = window.graphView?.controller?.model?.visualEffectObject?.GetResource()?.asset;
+
+        if (asset != null)
+        {
+            var guid = AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(asset));
+            EditorPrefs.SetBool(kNavigatorVisiblePreferenceName + guid.ToString(), visible);
         }
 
         navigator.UpdatePresenterPosition();
