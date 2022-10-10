@@ -22,6 +22,8 @@ namespace UnityEditor.VFX
         List<(float, float, float, VFXEventAttribute)> attributeQueue;
         Queue<(float, float, float, VFXEventAttribute)> available;
 
+        int current = 0;
+
         public override void OnPlay(VFXSpawnerState state, VFXExpressionValues vfxValues, VisualEffect vfxComponent)
         {
             if (attributeQueue == null)
@@ -47,16 +49,19 @@ namespace UnityEditor.VFX
 
         public override void OnStop(VFXSpawnerState state, VFXExpressionValues vfxValues, VisualEffect vfxComponent)
         {
-            attributeQueue.Clear();
+            while (attributeQueue.Count > 0)
+            {
+                available.Enqueue(attributeQueue[0]);
+                attributeQueue.RemoveAt(0);
+            }
+            current = 0;
         }
 
-        int current = 0;
 
         public override void OnUpdate(VFXSpawnerState state, VFXExpressionValues vfxValues, VisualEffect vfxComponent)
         {
             if (attributeQueue != null && attributeQueue.Count > 0)
             {
-                // Update Current
                 var tuple = attributeQueue[current];
 
                 float dt = state.deltaTime * attributeQueue.Count;
@@ -83,7 +88,10 @@ namespace UnityEditor.VFX
                     current = 0;
             }
             else
+            {
                 state.playing = false;
+                current = 0;
+            }
         }
     }
 }

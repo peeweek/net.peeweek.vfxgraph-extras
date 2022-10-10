@@ -37,7 +37,10 @@ namespace UnityEditor.VFX
 
         public override void OnStop(VFXSpawnerState state, VFXExpressionValues vfxValues, VisualEffect vfxComponent)
         {
-            attributeQueue.Clear();
+            while (attributeQueue.Count > 0)
+            {
+                available.Enqueue(attributeQueue.Dequeue());
+            }
         }
 
         public override void OnUpdate(VFXSpawnerState state, VFXExpressionValues vfxValues, VisualEffect vfxComponent)
