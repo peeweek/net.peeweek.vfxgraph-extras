@@ -5,16 +5,18 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEditor.VFX;
 using UnityEngine.VFX;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine.Profiling;
+using System.Text;
 
-static class VFXGraphExtension
+static partial class VFXGraphExtension
 {
     [InitializeOnLoadMethod]
     static void InitializeExtension()
     {
         EditorApplication.update += Update;
     }
-
-
 
     static void Update()
     {
@@ -23,6 +25,7 @@ static class VFXGraphExtension
 
         VFXViewWindow window = VFXViewWindow.currentWindow;
         VisualElement extension = window.graphView.Q("extension");
+
         if (extension == null)
         {
             var content = window.graphView.Q("contentViewContainer");
@@ -31,6 +34,21 @@ static class VFXGraphExtension
             extension = new VFXExtensionBoard();
             extension.name = "extension";
             root.Add(extension);
+        }
+
+        Profiler.BeginSample("VFXGraphExtension.UpdateStatsUI");
+        UpdateStatsUIElements();
+        Profiler.EndSample();
+        if(window.graphView != null && window.graphView.controller != null && window.graphView.controller.model.asset != null)
+        {
+            Profiler.BeginSample("VFXGraphExtension.UpdateDebugInfo");
+            UpdateDebugInfo();
+            Profiler.EndSample();
+        }
+
+        if(!navigators.ContainsKey(window))
+        {
+            InitializeNavigator(window);
         }
     }
 
@@ -58,6 +76,7 @@ static class VFXGraphExtension
         VFXGraphGalleryWindow.OpenWindowAddTemplate(pos);
     }
 
+
     static void CreateGameObjectAndAttach()
     {
         var resource = VFXViewWindow.currentWindow.graphView.controller.model.visualEffectObject.GetResource();
@@ -71,6 +90,14 @@ static class VFXGraphExtension
         vfx.visualEffectAsset = asset;
         Selection.activeGameObject = go;
         VFXViewWindow.currentWindow.LoadAsset(asset, vfx);
+    }
+
+    static class Styles
+    {
+        public static Color sysInfoGreen = new Color(.1f, .5f, .1f, 1f);
+        public static Color sysInfoOrange = new Color(.5f, .3f, .1f, 1f);
+        public static Color sysInfoRed = new Color(.5f, .1f, .1f, 1f);
+        public static Color sysInfoUnknown = new Color(.5f, .1f, .7f, 1f); 
     }
 
     class VFXExtensionBoard : GraphElement
@@ -99,6 +126,7 @@ static class VFXGraphExtension
             button.style.width = 24;
             button.style.height = 16;
             Add(button);
+
         }
 
         void OnClick()
@@ -115,9 +143,10 @@ static class VFXGraphExtension
                 m.AddItem(new GUIContent("Add System from Template... (T)"), false, OpenAddCreateWindowScreenCenter);
                 m.AddSeparator("");
                 m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach);
+                m.AddItem(new GUIContent("Show Debug Stats"), debugInfoVisible, ToggleSpawnerStats);
+                m.AddItem(new GUIContent("Navigator #N"), navigatorVisibility[VFXViewWindow.currentWindow], ToggleNavigatorMenu, VFXViewWindow.currentWindow);
                 m.ShowAsContext();
             }
-
         }
     }
 

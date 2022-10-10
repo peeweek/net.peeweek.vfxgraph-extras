@@ -22,6 +22,7 @@ namespace UnityEngine.VFX.DebugTools
             public GameObject gameObject => component.gameObject;
             public VisualEffectAsset asset => component.visualEffectAsset;
 
+
             // Validity Check, should be performed at least once each frame before accessing API
             public bool valid => component != null && gameObject != null && asset != null && renderer != null;
 
@@ -61,6 +62,25 @@ namespace UnityEngine.VFX.DebugTools
             public void ToggleRendered() { renderer.enabled = !renderer.enabled; }
             public bool rendered => renderer.enabled;
 
+            Dictionary<string, uint> maxSystemCounts;
+
+            public uint GetMaxAliveCount(string systemName, uint currentCount)
+            {
+                if (maxSystemCounts == null)
+                    maxSystemCounts = new Dictionary<string, uint>();
+
+                if(maxSystemCounts.ContainsKey(systemName))
+                {
+                    uint newCount = (uint)Mathf.Max(maxSystemCounts[systemName], currentCount);
+                    maxSystemCounts[systemName] = newCount;
+                    return newCount;
+                }
+                else
+                {
+                    maxSystemCounts.Add(systemName, currentCount);
+                    return currentCount;
+                }
+            }
         }
 
         public static void UpdateAll(ref List<DebugEntry> list, bool deepSearch)

@@ -2,7 +2,6 @@
     "name": "VisualEffectGraphExtras.Runtime",
     "rootNamespace": "",
     "references": [
-        "Unity.VisualEffectGraph.Editor",
         "Unity.VisualEffectGraph.Runtime",
         "Unity.RenderPipelines.Core.Runtime"
     ],

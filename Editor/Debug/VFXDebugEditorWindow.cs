@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.SceneManagement;
 using UnityEditor;
@@ -18,6 +18,42 @@ namespace UnityEngine.VFX.DebugTools
                     Open(); 
                 return s_Instance; 
             } 
+        }
+
+        public enum CameraMode
+        {
+            SceneView = 0,
+            MainCamera = 1
+        }
+
+        public enum ViewMode
+        {
+            Grouped = 0,
+            Sorted = 1
+        }
+
+        public enum SortMode
+        {
+            Name = 0,
+            CameraDistance = 1,
+            ParticleCount = 2
+        }
+
+        ViewMode viewMode
+        {
+            get => (ViewMode)EditorPrefs.GetInt("VFXDebug.viewMode", 0);
+            set => EditorPrefs.SetInt("VFXDebug.viewMode", (int)value);
+        }
+
+        SortMode sortMode
+        {
+            get => (SortMode)EditorPrefs.GetInt("VFXDebug.sortMode", 0);
+            set => EditorPrefs.SetInt("VFXDebug.sortMode", (int)value);
+        }
+        CameraMode cameraMode
+        {
+            get => (CameraMode)EditorPrefs.GetInt("VFXDebug.cameraMode", 0);
+            set => EditorPrefs.SetInt("VFXDebug.cameraMode", (int)value);
         }
 
         bool groupByScene { 
@@ -128,9 +164,23 @@ namespace UnityEngine.VFX.DebugTools
             Profiler.BeginSample("VFXDebugWindow.DrawToolbar");
             using (new GUILayout.HorizontalScope(EditorStyles.toolbar))
             {
-                GUILayout.Label(Contents.Cache("Group By:"), Styles.toolbarButtonBold);
-                groupByScene = GUILayout.Toggle(groupByScene, Contents.Cache("Scene"), Styles.toolbarButton);
-                groupByAsset = GUILayout.Toggle(groupByAsset, Contents.Cache("Asset"), Styles.toolbarButton);
+                viewMode = (ViewMode)EditorGUILayout.EnumPopup(viewMode, Styles.popupBold, GUILayout.Width(90));
+                if(viewMode == ViewMode.Grouped)
+                {
+                    GUILayout.Label(Contents.Cache("By:"), Styles.toolbarButtonBold);
+                    groupByScene = GUILayout.Toggle(groupByScene, Contents.Cache("Scene"), Styles.toolbarButton);
+                    groupByAsset = GUILayout.Toggle(groupByAsset, Contents.Cache("Asset"), Styles.toolbarButton);
+                }
+                else if(viewMode == ViewMode.Sorted)
+                {
+                    GUILayout.Label(Contents.Cache("By:"), Styles.toolbarButtonBold);
+                    sortMode = (SortMode)EditorGUILayout.EnumPopup(sortMode, EditorStyles.toolbarPopup, GUILayout.Width(120));
+                }
+
+
+                GUILayout.Space(32);
+                GUILayout.Label(Contents.Cache("Camera:"), Styles.toolbarButtonBold);
+                cameraMode = (CameraMode)EditorGUILayout.EnumPopup(cameraMode, EditorStyles.toolbarPopup, GUILayout.Width(120));
 
                 GUILayout.Space(32);
 
@@ -160,7 +210,41 @@ namespace UnityEngine.VFX.DebugTools
             int i = 0;
 
             string currentScene = string.Empty;
+            Vector3 cameraPos = Vector3.zero;
+            switch (cameraMode)
+            {
+                case CameraMode.SceneView:
+                    cameraPos = SceneView.lastActiveSceneView.camera.transform.position;
+                    break;
+                case CameraMode.MainCamera:
+                    if (Camera.main != null)
+                        cameraPos = Camera.main.transform.position;
+                    else
+                        cameraPos = SceneView.lastActiveSceneView.camera.transform.position;
+                    break;
+                default:
+                    break;
+            }
             VisualEffectAsset currentAsset = null;
+
+            if(viewMode == ViewMode.Sorted)
+            {
+
+                switch (sortMode)
+                {
+                    case SortMode.Name:
+                        entries = entries.OrderBy(o => o.asset.name).ToList();
+                        break;
+                    case SortMode.CameraDistance:
+                        entries = entries.OrderBy(o => Vector3.SqrMagnitude(cameraPos - o.component.transform.position)).ToList();
+                        break;
+                    case SortMode.ParticleCount:
+                        entries = entries.OrderBy(o => o.component.aliveParticleCount).ToList();
+                        break;
+                    default:
+                        break;
+                }
+            }
 
             foreach (var entry in entries)
             {
@@ -175,7 +259,7 @@ namespace UnityEngine.VFX.DebugTools
 
                 Profiler.BeginSample("VFXDebugWindow.DrawSceneHeader");
                 // Display group header if new scene
-                if (groupByScene && currentScene != entry.sceneName)
+                if (viewMode == ViewMode.Grouped && groupByScene && currentScene != entry.sceneName)
                 {
                     currentScene = entry.sceneName;
                     GUI.backgroundColor = new Color(.6f, .6f, .6f, 1.0f);
@@ -193,8 +277,9 @@ namespace UnityEngine.VFX.DebugTools
                 bool filterString = !string.IsNullOrEmpty(filter);
 
                 Profiler.BeginSample("VFXDebugWindow.DrawAssetHeader");
+
                 // Display group header if new asset
-                if (groupByAsset && currentAsset != entry.asset)
+                if (viewMode == ViewMode.Grouped && groupByAsset && currentAsset != entry.asset)
                 {
                     currentAsset = entry.asset;
                     GUI.backgroundColor = new Color(.8f, .8f, .8f, 1.0f);
@@ -239,7 +324,7 @@ namespace UnityEngine.VFX.DebugTools
                 GUI.backgroundColor = new Color(f, f, f, 1.0f);
                 i++;
 
-                if (groupByAsset && Selection.activeObject == currentAsset)
+                if (viewMode == ViewMode.Grouped && groupByAsset && Selection.activeObject == currentAsset)
                     GUI.backgroundColor *= new Color(1.5f, 1.2f, 0.8f, 1.0f);
                 else if (Selection.activeGameObject == entry.gameObject)
                     GUI.backgroundColor = new Color(0.6f, 1.4f, 2.0f, 1.0f);
@@ -249,9 +334,9 @@ namespace UnityEngine.VFX.DebugTools
                 Rect line = GUILayoutUtility.GetRect(Contents.none, EditorStyles.toolbar, GUILayout.ExpandWidth(true));
                 {
                     GUI.Box(line, Contents.none, EditorStyles.toolbarButton);
-
-                    if (groupByScene) line.xMin += 24;
-                    if (groupByAsset) line.xMin += 24;
+                    line.xMin += 8;
+                    if (viewMode == ViewMode.Grouped && groupByScene) line.xMin += 24;
+                    if (viewMode == ViewMode.Grouped && groupByAsset) line.xMin += 24;
 
                     Rect r = line;
                     r.width = 24;
@@ -259,6 +344,16 @@ namespace UnityEngine.VFX.DebugTools
                     bool b = GUI.Toggle(r, entry.gameObject.activeSelf, "", EditorStyles.toggle);
                     if (entry.gameObject.activeSelf != b)
                         entry.gameObject.SetActive(b);
+
+                    r.xMin = r.xMax; r.width = 24;
+                    if (string.IsNullOrEmpty(currentScene))
+                        GUI.Label(r, "", EditorStyles.toolbar);
+                    else
+                    {
+                        if (GUI.Button(r, IsShowAdvanced(entry.component) ? "▼" : "►", EditorStyles.toolbarButton))
+                            ToggleShowAdvanced(entry.component);
+                    }
+
 
                     r.xMin = r.xMax;
                     r.width = 280 - 18;
@@ -287,7 +382,7 @@ namespace UnityEngine.VFX.DebugTools
                     r.xMin = r.xMax; r.width = 80;
                     GUI.Label(r, entry.resetSeedOnPlay ? Contents.reseed : Contents.Seed(entry.seed), Styles.toolbarButton);
                     r.xMin = r.xMax; r.width = 80;
-                    GUI.Label(r, Vector3.Distance(SceneView.lastActiveSceneView.camera.transform.position, entry.position).ToString("F2"), Styles.toolbarButtonRight);
+                    GUI.Label(r, Vector3.Distance(cameraPos, entry.position).ToString("F2"), Styles.toolbarButtonRight);
 
                     r.xMin = r.xMax; r.width = 32;
                     if (GUI.Button(r, entry.paused ? Contents.pauseIcon : Contents.playIcon, EditorStyles.toolbarButton))
@@ -304,6 +399,7 @@ namespace UnityEngine.VFX.DebugTools
                     r.xMin = r.xMax; r.width = 32;
                     if (GUI.Button(r, entry.rendered ? Contents.rendererOnIcon : Contents.rendererOffIcon, EditorStyles.toolbarButton))
                         entry.ToggleRendered();
+
 
 
                     float m = r.xMax;
@@ -326,16 +422,100 @@ namespace UnityEngine.VFX.DebugTools
                             VFXViewWindow.currentWindow.LoadAsset(entry.asset, entry.component);
                         }
                     }
+                }
+
+                // Show advanced info for component
+                if (IsShowAdvanced(entry.component) && (!string.IsNullOrEmpty(currentScene)))
+                {
+                    if (systemNames == null)
+                        systemNames = new List<string>();
+
+                    entry.component.GetParticleSystemNames(systemNames);
+                    foreach (var s in systemNames)
+                    {
+                        line = GUILayoutUtility.GetRect(Contents.none, EditorStyles.toolbar, GUILayout.ExpandWidth(true));
+                        {
+                            var info = entry.component.GetParticleSystemInfo(s);
+                            info = entry.component.GetParticleSystemInfo(Shader.PropertyToID(s));
+                            Rect r = line;
+                            r.xMin = 56;
+                            if (groupByAsset) r.xMin += 24;
+                            if (groupByScene) r.xMin += 24;
+                            r.width = 128;
+                            GUI.Label(r, s, Styles.toolbarButton);
+
+
+                            r.xMin = r.xMax; r.width = 200;
+                            float t = (float)info.aliveCount / info.capacity;
+                            Rect p = r;
+                            p.width = r.width * Mathf.Lerp(.05f, 1f, t);
+
+                            Color c = Styles.green;
+                            if (t < 0.1f)
+                                c = Styles.red;
+                            else if (t < 0.5f)
+                                c = Styles.orange;
+
+                            GUI.Label(r, "", EditorStyles.toolbarButton);
+                            EditorGUI.DrawRect(p, c);
+                            GUI.Label(r,$"{info.aliveCount}/{info.capacity}", Styles.centerLabel);
+
+                            r.xMin = r.xMax; r.width = 90;
+                            GUI.Label(r, info.sleeping? "Sleeping" : "Not Sleeping", Styles.toolbarButtonBold);
+
+
+                            r.xMin = r.xMax + 40; r.width = 80;
+                            GUI.Label(r, "Max seen:", Styles.toolbarButton);
+
+                            r.xMin = r.xMax; r.width = 200;
+                            uint maxC = entry.GetMaxAliveCount(s, info.aliveCount);
+                            t = (float)maxC / info.capacity;
+                            p = r;
+                            p.width = r.width * Mathf.Lerp(.05f, 1f, t);
+
+                            c = Styles.green;
+                            if (t < 0.1f)
+                                c = Styles.red;
+                            else if (t < 0.5f)
+                                c = Styles.orange;
+
+                            GUI.Label(r, "", EditorStyles.toolbarButton);
+                            EditorGUI.DrawRect(p, c);
+                            GUI.Label(r, $"{maxC}/{info.capacity}", Styles.centerLabel);
+                        }
+                    }
 
                 }
                 Profiler.EndSample();
+
+                
+
             }
 
             GUILayout.Space(80);
 
             EditorGUILayout.EndScrollView();
+        }
+        List<string> systemNames;
 
+        List<VisualEffect> advanced;
+        bool IsShowAdvanced(VisualEffect vfx)
+        {
+            if (advanced == null)
+                advanced = new List<VisualEffect>();
 
+            return advanced.Contains(vfx);
+        }
+
+        void ToggleShowAdvanced(VisualEffect vfx)
+        {
+            if (advanced == null)
+                advanced = new List<VisualEffect>();
+
+            if (advanced.Contains(vfx))
+                advanced.Remove(vfx);
+            else
+                advanced.Add(vfx);
         }
 
         void Reload(bool deepSearch = false)
@@ -448,14 +628,20 @@ namespace UnityEngine.VFX.DebugTools
 
         class Styles
         {
+            public static Color green = new Color(0.1f, 0.5f, 0.0f);
+            public static Color orange = new Color(0.5f, 0.3f, 0.0f); 
+            public static Color red = new Color(0.5f, 0.0f, 0.1f);
+
             public static GUIStyle header;
 
             public static GUIStyle toolbarButton;
             public static GUIStyle toolbarButtonBold;
             public static GUIStyle toolbarButtonRight;
+            public static GUIStyle popupBold;
 
             public static GUIStyle bigLabel;
             public static GUIStyle rightLabel;
+            public static GUIStyle centerLabel;
 
             static Styles()
             {
@@ -471,13 +657,17 @@ namespace UnityEngine.VFX.DebugTools
                 toolbarButtonBold = new GUIStyle(EditorStyles.toolbarButton);
                 toolbarButtonBold.alignment = TextAnchor.MiddleLeft;
                 toolbarButtonBold.fontStyle = FontStyle.Bold;
+
+                popupBold = new GUIStyle(EditorStyles.toolbarPopup);
+                popupBold.fontStyle = FontStyle.Bold;
                 
                 bigLabel = new GUIStyle(EditorStyles.boldLabel);
                 bigLabel.fontSize = 18;
 
                 rightLabel = new GUIStyle(EditorStyles.label);
                 rightLabel.alignment = TextAnchor.MiddleRight;
-
+                centerLabel = new GUIStyle(EditorStyles.label);
+                centerLabel.alignment = TextAnchor.MiddleCenter;
             }
         }
     }
