@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.VFX;
 using UnityEngine.VFX.Utility;
 
-namespace UnityEditor.VFX
+namespace UnityEngine.VFX.Extras
 {
 
     [Serializable]
@@ -14,11 +14,10 @@ namespace UnityEditor.VFX
 
         public bool enableUpdate = true;
 
-        public abstract void Reset(VFXEventTest test);
-        public abstract void Update(VFXEventTest test, VisualEffect vfx);
+        public abstract void Reset(VFXEventTest test, float currentTime);
+        public abstract void Update(VFXEventTest test, VisualEffect vfx, float currentTime);
 
-        public virtual bool OnBeforeSceneGUI(SceneView sceneView, Event evt) => false;
-        public virtual bool OnDuringSceneGUI(SceneView sceneView, Event evt) => false;
+        public virtual bool OnSceneGUIUpdate(Camera camera, Vector2 mousePosition, bool mouseLeft, bool mouseRight, float currentTime) => false;
 
     }
 
@@ -30,19 +29,19 @@ namespace UnityEditor.VFX
 
         double m_Time = -1.0;
 
-        public override void Reset(VFXEventTest test)
+        public override void Reset(VFXEventTest test, float currentTime)
         {
-            m_Time = EditorApplication.timeSinceStartup;
+            m_Time = currentTime;
         }
 
-        public override void Update(VFXEventTest test, VisualEffect vfx)
+        public override void Update(VFXEventTest test, VisualEffect vfx, float currentTime)
         {
             if (periodicity == 0.0f)
                 return;
 
-            if ((m_Time == -1)|| ((EditorApplication.timeSinceStartup - m_Time) > periodicity))
+            if ((m_Time == -1)|| ((currentTime - m_Time) > periodicity))
             {
-                Reset(test);
+                Reset(test, currentTime);
                 test.PerformEvent(vfx);
             }
         }
@@ -58,24 +57,24 @@ namespace UnityEditor.VFX
         float m_TTL;
         double m_Time;
 
-        public override void Reset(VFXEventTest test)
+        public override void Reset(VFXEventTest test, float currentTime)
         {
             m_TTL = 0f;
-            m_Time = EditorApplication.timeSinceStartup;
+            m_Time = currentTime;
         }
 
-        public override bool OnBeforeSceneGUI(SceneView sceneView, Event evt)
+        public override bool OnSceneGUIUpdate(Camera camera, Vector2 mousePosition, bool mouseLeft, bool mouseRight, float currentTime)
         {
-            float deltaTime = (float)(EditorApplication.timeSinceStartup - m_Time);
-            m_Time = EditorApplication.timeSinceStartup;
+            float deltaTime = (float)(currentTime - m_Time);
+            m_Time = currentTime;
 
-            if (evt.type == EventType.MouseDown && evt.button == 0)
+            if (mouseLeft)
             {
                 m_TTL = 0f;
                 shooting = true;
-                ProcessShoot(sceneView);
+                ProcessShoot(mousePosition, camera);
             }
-            else if (evt.type == EventType.MouseUp && evt.button == 0)
+            else
             {
                 shooting = false;
             }
@@ -85,7 +84,7 @@ namespace UnityEditor.VFX
                 m_TTL += deltaTime;
                 if (m_TTL > shootInterval)
                 {
-                    ProcessShoot(sceneView);
+                    ProcessShoot(mousePosition, camera);
                     m_TTL = 0f;
                 }
                 return true;
@@ -100,12 +99,9 @@ namespace UnityEditor.VFX
         Vector3 impactPosition;
         Vector3 impactNormal;
 
-        public void ProcessShoot(SceneView sv)
+        public void ProcessShoot(Vector2 mousePosition, Camera camera)
         {
-            Vector2 pos = Event.current.mousePosition;
-            pos.y = (SceneView.lastActiveSceneView.position.height - 22) - pos.y;
-            
-            Ray r = SceneView.lastActiveSceneView.camera.ScreenPointToRay(pos);
+            Ray r = camera.ScreenPointToRay(mousePosition);
 
             if (Physics.Raycast(r, out RaycastHit hit))
             {
@@ -117,7 +113,7 @@ namespace UnityEditor.VFX
                 impact = false;
         }
 
-        public override void Update(VFXEventTest test, VisualEffect vfx)
+        public override void Update(VFXEventTest test, VisualEffect vfx, float currentTime)
         {
             if(shooting && impact)
             {

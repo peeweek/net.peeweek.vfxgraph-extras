@@ -1,20 +1,36 @@
-﻿using UnityEditor;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.VFX;
+using UnityEngine.VFX.Extras;
 using UnityEditorInternal;
-using System.Collections.Generic;
 
 namespace UnityEditor.VFX
 {
     class VFXAdvancedEventTester : EditorWindow
     {
         [SerializeField]
-        VisualEffect visualEffect;
+        VisualEffect visualEffect = null;
         [SerializeField]
-        bool lockSelection;
+        bool lockSelection = false;
 
-        [SerializeField]
-        List<VFXEventTest> tests;
+        VFXSceneEventTest sceneEventTestComponent;
+
+        List<VFXEventTest> tests
+        {
+            get
+            {
+                if (visualEffect == null)
+                    return null;
+
+                if(visualEffect.TryGetComponent(out VFXSceneEventTest sceneTest))
+                {
+                    return sceneTest.eventTests;
+                }
+
+                return null;
+            }
+        }
+
         ReorderableList testsRList;
 
         [MenuItem("Window/Visual Effects/VFX Advanced Event Tester")]
@@ -33,45 +49,76 @@ namespace UnityEditor.VFX
 
             titleContent = new GUIContent("VFX Advanced Event Tester", m_Icon);
 
-            if (tests == null)
-                tests = new List<VFXEventTest>();
+            EditorApplication.update += TesterUpdate;
+            SceneView.beforeSceneGui += TesterSceneUpdate;
+        }
 
-            if (testsRList == null)
+        void GetSceneTestComponentFor(VisualEffect sceneComponent, bool createIfNotPresent)
+        {   
+            if (!sceneComponent.TryGetComponent(out sceneEventTestComponent) && createIfNotPresent)
             {
-                testsRList = new ReorderableList(tests, typeof(VFXEventTest), true, true, true, true);
+                sceneEventTestComponent = sceneComponent.gameObject.AddComponent<VFXSceneEventTest>();
+            }
+
+            if((sceneEventTestComponent != null && testsRList == null) || (testsRList.list != sceneEventTestComponent.eventTests))
+            {
+                Debug.Log("Recreate RList");
+                testsRList = new ReorderableList(sceneEventTestComponent.eventTests, typeof(VFXEventTest), true, true, true, true);
                 testsRList.drawHeaderCallback = OnDrawHeader;
                 testsRList.drawElementCallback = OnDrawElement;
                 testsRList.onAddCallback = OnTestAdd;
                 testsRList.onRemoveCallback = OnTestRemove;
                 testsRList.onSelectCallback = OnTestSelect;
             }
-
-            EditorApplication.update += TesterUpdate;
-            SceneView.beforeSceneGui += ToolBeforeSceneUpdate;
-            SceneView.duringSceneGui += ToolDuringSceneUpdate;
         }
 
         private void OnDisable()
         {
             EditorApplication.update -= TesterUpdate;
-            SceneView.beforeSceneGui -= ToolBeforeSceneUpdate;
-            SceneView.duringSceneGui -= ToolDuringSceneUpdate;
+            SceneView.beforeSceneGui -= TesterSceneUpdate;
         }
 
-        void ToolBeforeSceneUpdate(SceneView sceneView)
-        {
-            if (Event.current.alt || Event.current.type == EventType.Layout || Event.current.type == EventType.Repaint)
-                return;
+        bool mouseLeft = false;
+        bool mouseRight = false;
 
+        void TesterSceneUpdate(SceneView sceneView)
+        {
+            if (tests == null || Event.current.alt || Event.current.type == EventType.Layout || Event.current.type == EventType.Repaint)
+                return;
 
             bool used = false;
             foreach(var test in tests)
             {
-                if (test.updateBehavior == null && !test.updateBehavior.canUseTool)
+                if (test == null || test.updateBehavior == null)
                     continue;
 
-                if(test.updateBehavior.enableUpdate)
-                    used = used || test.updateBehavior.OnBeforeSceneGUI(sceneView, Event.current);
+                if (!test.updateBehavior.canUseTool)
+                    continue;
+
+                if (test.updateBehavior.enableUpdate)
+                {
+                    Vector2 mousePosition = Event.current.mousePosition;
+                    mousePosition.y = (SceneView.lastActiveSceneView.position.height - 22) - mousePosition.y;
+                    Event e = Event.current;
+
+                    if (e.type == EventType.MouseDown)
+                    {
+                        if (e.button == 0)
+                            mouseLeft = true;
+                        else if (e.button == 1)
+                            mouseRight = true;
+
+                    }
+                    else if (e.type == EventType.MouseUp)
+                    {
+                        if (e.button == 0)
+                            mouseLeft = false;
+                        else if (e.button == 1)
+                            mouseRight = false;
+                    }
+                    
+                    used = used || test.updateBehavior.OnSceneGUIUpdate(sceneView.camera, mousePosition, mouseLeft, mouseRight, (float)EditorApplication.timeSinceStartup);
+                }
             }
             
             if(used)
@@ -81,35 +128,9 @@ namespace UnityEditor.VFX
             }
         }
 
-        void ToolDuringSceneUpdate(SceneView sceneView)
-        {
-            if (Event.current.alt)
-                return;
-
-            
-
-            bool used = false;
-            foreach (var test in tests)
-            {
-                if (test.updateBehavior == null && !test.updateBehavior.canUseTool)
-                    continue;
-
-                if (test.updateBehavior.enableUpdate)
-                    used = used || test.updateBehavior.OnDuringSceneGUI(sceneView, Event.current);
-            }
-
-            if (used)
-            {
-                Selection.activeGameObject = null;
-                Event.current.Use();
-            }
-
-        }
-
-
         void TesterUpdate()
         {
-            if (visualEffect == null)
+            if (visualEffect == null || tests == null)
                 return;
 
             foreach(var test in tests)
@@ -117,7 +138,7 @@ namespace UnityEditor.VFX
                 if (test == null)
                     continue;
 
-                test.UpdateTest(visualEffect);
+                test.UpdateTest(visualEffect, (float)EditorApplication.timeSinceStartup);
             }
         }
 
@@ -132,12 +153,12 @@ namespace UnityEditor.VFX
             rect.height = 18;
 
             var b = rect;
-            b.width = 32;
+            b.width = 28;
 
             if (tests[index] == null || tests[index].updateBehavior == null)
             {
                 EditorGUI.BeginDisabledGroup(true);
-                GUI.Toggle(b, false, string.Empty);
+                GUI.Toggle(b, false, GUIContent.none, EditorStyles.miniButton);
                 EditorGUI.EndDisabledGroup();
             }
             else
@@ -146,18 +167,37 @@ namespace UnityEditor.VFX
                 tests[index].updateBehavior.enableUpdate = GUI.Toggle(b, tests[index].updateBehavior.enableUpdate, Contents.Refresh, EditorStyles.miniButton);
                 if(EditorGUI.EndChangeCheck() && tests[index].updateBehavior.enableUpdate)
                 {
-                    tests[index].ResetTest(visualEffect);
+                    tests[index].ResetTest(visualEffect, (float)EditorApplication.timeSinceStartup);
                 }
             }
+
             rect.xMin += 32;
             b = rect;
-            b.width = 32;
+            b.width = 28;
 
             if (GUI.Button(b, "▶"))
-                tests[index].PerformEvent(visualEffect);
+                tests[index]?.PerformEvent(visualEffect);
 
             rect.xMin += 32;
+
+            if (tests[index] == null)
+                rect.width -= 32;
+
             tests[index] = (VFXEventTest)EditorGUI.ObjectField(rect, tests[index], typeof(VFXEventTest), false);
+
+            if(tests[index] == null)
+            {
+                rect.xMin = rect.xMax;
+                rect.width = 32;
+                if (GUI.Button(rect, "+"))
+                {
+                    var instance = CreateInstance<VFXEventTest>();
+                    Undo.RegisterCreatedObjectUndo(instance, "Create new VFXEventTest Object");
+
+                    Undo.RecordObject(sceneEventTestComponent, "Assign VFXEventTest to SceneEventTest Component");
+                    sceneEventTestComponent.eventTests[index] = instance;
+                }
+            }
 
         }
 
@@ -175,11 +215,11 @@ namespace UnityEditor.VFX
                 l.index = i;
             }
         }
+
         void OnTestSelect(ReorderableList l) 
         {
             if (tests[l.index] == null)
                 return;
-
         }
 
         private void OnSelectionChange()
@@ -262,16 +302,34 @@ namespace UnityEditor.VFX
             }
             EditorGUILayout.Space();
 
-            testsRList.DoLayoutList();
-
-            if(testsRList.index != -1 && tests[testsRList.index] != null)
+            if(visualEffect != null)
             {
-                EditorGUILayout.Space();
-                Editor.CreateCachedEditor(tests[testsRList.index], null, ref m_EvtEditor);
-                m_EvtEditor.DrawHeader();
-                EditorGUI.indentLevel ++;
-                m_EvtEditor.OnInspectorGUI();
-                EditorGUI.indentLevel --;
+                GetSceneTestComponentFor(visualEffect, false);
+
+                if (tests != null)
+                {
+                    if (testsRList.count == 0)
+                        testsRList.index = -1;
+
+                    testsRList.DoLayoutList();
+
+                    if (testsRList.index != -1 && tests[testsRList.index] != null)
+                    {
+                        EditorGUILayout.Space();
+                        Editor.CreateCachedEditor(tests[testsRList.index], null, ref m_EvtEditor);
+                        m_EvtEditor.DrawHeader();
+                        EditorGUI.indentLevel++;
+                        m_EvtEditor.OnInspectorGUI();
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                else
+                {
+                    if (GUILayout.Button("Create Test Component on Game Object", GUILayout.Height(24)))
+                    {
+                        GetSceneTestComponentFor(visualEffect, true);
+                    }
+                }
             }
 
             EditorGUI.EndDisabledGroup();

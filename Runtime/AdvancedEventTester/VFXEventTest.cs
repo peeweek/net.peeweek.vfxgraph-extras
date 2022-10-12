@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.VFX;
 using UnityEngine.VFX.Utility;
 
-namespace UnityEditor.VFX
+namespace UnityEngine.VFX.Extras
 {
     [CreateAssetMenu(fileName = "New VFX Event Test", menuName = "Visual Effects/VFX Event Test")]
     public class VFXEventTest : ScriptableObject
@@ -12,7 +12,7 @@ namespace UnityEditor.VFX
         public string eventName = "Event";
 
         [SerializeReference]
-        public List<EventAttributeSetup> eventAttributes;
+        public List<EventAttributeSetup> eventAttributes = new List<EventAttributeSetup>();
 
         [SerializeReference]
         public EventTestUpdateBehavior updateBehavior;
@@ -40,16 +40,16 @@ namespace UnityEditor.VFX
             vfx.SendEvent(eventName, attribute);
         }
 
-        public void ResetTest(VisualEffect vfx)
+        public void ResetTest(VisualEffect vfx, float currentTime)
         {
             if (updateBehavior != null)
-                updateBehavior.Reset(this);
+                updateBehavior.Reset(this, currentTime);
         }
 
-        public void UpdateTest(VisualEffect vfx)
+        public void UpdateTest(VisualEffect vfx, float currentTime)
         {
             if (updateBehavior != null && updateBehavior.enableUpdate)
-                updateBehavior.Update(this, vfx);
+                updateBehavior.Update(this, vfx, currentTime);
         }
 
     }

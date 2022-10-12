@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.VFX.Extras;
 
 namespace UnityEditor.VFX
 {
@@ -43,7 +44,7 @@ namespace UnityEditor.VFX
             if (item != null)
             {
                 Rect b = rect;
-                b.width = 24;
+                b.width = 20;
                 EditorGUI.BeginChangeCheck();
                 var enabledProp = item.FindPropertyRelative("enabled");
                 bool enabled = GUI.Toggle(b, enabledProp.boolValue, GUIContent.none);
@@ -100,8 +101,19 @@ namespace UnityEditor.VFX
 
             foreach (var type in s_AttributeTypes)
             {
-                string name = type.Name;
-                m_AttributeMenu.AddItem(new GUIContent(ObjectNames.NicifyVariableName(name)), false, AddAttribute, type);
+                string name = ObjectNames.NicifyVariableName(type.Name);
+                string category = "";
+
+                var attr = type.GetCustomAttributes(typeof(EventAttributeSetupAttribute), false).FirstOrDefault() as EventAttributeSetupAttribute;
+                if(attr != null)
+                {
+                    if (!string.IsNullOrEmpty(attr.name))
+                        name = attr.name;
+                    if (!string.IsNullOrEmpty(attr.category))
+                        category = attr.category;
+                }
+
+                m_AttributeMenu.AddItem(new GUIContent(string.IsNullOrEmpty(category)? name : $"{category}/{name}"), false, AddAttribute, type);
             }
         }
 
@@ -138,17 +150,39 @@ namespace UnityEditor.VFX
                 (serializedObject.targetObject as VFXEventTest).updateBehavior = bh;
         }
 
+        protected override void OnHeaderGUI()
+        {
+            Rect r = GUILayoutUtility.GetRect(GUIContent.none, EditorStyles.miniButton, GUILayout.ExpandWidth(true), GUILayout.Height(8));
+            r.height = 1;
+            EditorGUI.DrawRect(r, Color.black);
+            bool isAsset = !string.IsNullOrEmpty(AssetDatabase.GetAssetPath(serializedObject.targetObject));
+            using (new GUILayout.HorizontalScope(Styles.header))
+            {
+                GUILayout.Label($"Selected VFXEventTest : {serializedObject.targetObject.name} ({(isAsset? "Asset" : "Saved in Scene")})", Styles.headerLabel);
+            }
+            GUILayout.Space(8);
+
+        }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+            EditorGUI.BeginDisabledGroup(!string.IsNullOrEmpty(AssetDatabase.GetAssetPath(serializedObject.targetObject)));
+            EditorGUI.BeginChangeCheck();
+            string n = EditorGUILayout.DelayedTextField("Name", serializedObject.targetObject.name);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(serializedObject.targetObject, "Set Object Name");
+                serializedObject.targetObject.name = n;
+            }
+            EditorGUI.EndDisabledGroup();
             EditorGUILayout.PropertyField(eventName);
 
             var testTarget = serializedObject.targetObject as VFXEventTest;
 
             using (new GUILayout.HorizontalScope(Styles.header))
             {
-                GUILayout.Label("Update Behavior", Styles.headerLabel);
+                GUILayout.Label("Update Behavior", Styles.headerSubLabel);
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("...", EditorStyles.miniButton, GUILayout.Width(24), GUILayout.Height(22)))
                 {
@@ -167,7 +201,7 @@ namespace UnityEditor.VFX
 
             using (new GUILayout.HorizontalScope(Styles.header))
             {
-                GUILayout.Label("Event Attributes", Styles.headerLabel);
+                GUILayout.Label("Event Attributes", Styles.headerSubLabel);
                 GUILayout.FlexibleSpace();
             }
 
@@ -211,6 +245,7 @@ namespace UnityEditor.VFX
         {
             public static GUIStyle header;
             public static GUIStyle headerLabel;
+            public static GUIStyle headerSubLabel;
 
             static Styles()
             {
@@ -225,6 +260,10 @@ namespace UnityEditor.VFX
                 headerLabel = new GUIStyle(EditorStyles.boldLabel);
                 headerLabel.fontSize = 13;
                 headerLabel.alignment = TextAnchor.MiddleLeft;
+
+                headerSubLabel = new GUIStyle(headerLabel);
+                headerSubLabel.fontSize = 11;
+
             }
         }
     }

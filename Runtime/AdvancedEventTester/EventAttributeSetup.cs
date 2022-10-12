@@ -1,10 +1,9 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.VFX;
 using UnityEngine.VFX.Utility;
 
-namespace UnityEditor.VFX
+namespace UnityEngine.VFX.Extras
 {
     [Serializable]
     public abstract class EventAttributeSetup
@@ -16,7 +15,7 @@ namespace UnityEditor.VFX
     }
 
 
-    [Serializable]
+    [Serializable, EventAttributeSetup("Float", "Float (Constant)")]
     public class ConstantFloat : EventAttributeSetup
     {
         public string attributeName = "size";
@@ -29,7 +28,7 @@ namespace UnityEditor.VFX
         }
     }
 
-    [Serializable]
+    [Serializable, EventAttributeSetup("Float", "Float (Random)")]
     public class RandomFloat : EventAttributeSetup
     {
         public string attributeName = "size";
@@ -49,7 +48,7 @@ namespace UnityEditor.VFX
         PerComponent
     }
 
-    [Serializable]
+    [Serializable, EventAttributeSetup("Vector2", "Vector2 (Constant)")]
     public class ConstantVector2 : EventAttributeSetup
     {
         public string attributeName = "position";
@@ -62,7 +61,7 @@ namespace UnityEditor.VFX
         }
     }
 
-    [Serializable]
+    [Serializable, EventAttributeSetup("Vector2", "Vector2 (Random)")]
     public class RandomVector2 : EventAttributeSetup
     {
         public string attributeName = "position";
@@ -95,7 +94,7 @@ namespace UnityEditor.VFX
         }
     }
 
-    [Serializable]
+    [Serializable, EventAttributeSetup("Vector3", "Vector3 (Constant)")]
     public class ConstantVector3 : EventAttributeSetup
     {
         public string attributeName = "position";
@@ -108,7 +107,7 @@ namespace UnityEditor.VFX
         }
     }
 
-    [Serializable]
+    [Serializable, EventAttributeSetup("Vector3", "Vector3 (Random)")]
     public class RandomVector3 : EventAttributeSetup
     {
         public string attributeName = "position";
@@ -142,7 +141,7 @@ namespace UnityEditor.VFX
         }
     }
 
-    [Serializable]
+    [Serializable, EventAttributeSetup("Color HDR", "Color HDR (Constant)")]
     public class ConstantHDRColor : EventAttributeSetup
     {
         public string attributeName = "color";
@@ -159,7 +158,7 @@ namespace UnityEditor.VFX
         }
     }
 
-    [Serializable]
+    [Serializable, EventAttributeSetup("Color HDR", "Color HDR (Random)")]
     public class RandomHDRColor : EventAttributeSetup
     {
         public string attributeName = "color";
@@ -196,7 +195,4 @@ namespace UnityEditor.VFX
             attrib.SetVector3(attributeName, value);
         }
     }
-
-
-
 }
