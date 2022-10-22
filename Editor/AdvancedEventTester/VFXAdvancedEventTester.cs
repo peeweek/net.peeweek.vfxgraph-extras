@@ -3,8 +3,9 @@ using UnityEngine;
 using UnityEngine.VFX;
 using UnityEngine.VFX.Extras;
 using UnityEditorInternal;
+using UnityEngine.VFX.EventTesting;
 
-namespace UnityEditor.VFX
+namespace UnityEditor.VFX.EventTesting
 {
     class VFXAdvancedEventTester : EditorWindow
     {
@@ -13,7 +14,7 @@ namespace UnityEditor.VFX
         [SerializeField]
         bool lockSelection = false;
 
-        VFXSceneEventTest sceneEventTestComponent;
+        VFXEventTestContainer sceneEventTestComponent;
 
         List<VFXEventTest> tests
         {
@@ -22,7 +23,7 @@ namespace UnityEditor.VFX
                 if (visualEffect == null)
                     return null;
 
-                if(visualEffect.TryGetComponent(out VFXSceneEventTest sceneTest))
+                if(visualEffect.TryGetComponent(out VFXEventTestContainer sceneTest))
                 {
                     return sceneTest.eventTests;
                 }
@@ -37,6 +38,14 @@ namespace UnityEditor.VFX
         static void OpenWindow()
         {
             GetWindow<VFXAdvancedEventTester>();
+        }
+
+        public static void OpenSceneTest(VFXEventTestContainer container)
+        {
+            var instance = GetWindow<VFXAdvancedEventTester>();
+
+            if(instance != null && container != null)
+                instance.visualEffect = container.GetComponent<VisualEffect>();
         }
 
         Texture m_Icon;
@@ -57,18 +66,21 @@ namespace UnityEditor.VFX
         {   
             if (!sceneComponent.TryGetComponent(out sceneEventTestComponent) && createIfNotPresent)
             {
-                sceneEventTestComponent = sceneComponent.gameObject.AddComponent<VFXSceneEventTest>();
+                sceneEventTestComponent = sceneComponent.gameObject.AddComponent<VFXEventTestContainer>();
             }
 
-            if((sceneEventTestComponent != null && testsRList == null) || (testsRList.list != sceneEventTestComponent.eventTests))
+            if(sceneEventTestComponent != null)
             {
-                Debug.Log("Recreate RList");
-                testsRList = new ReorderableList(sceneEventTestComponent.eventTests, typeof(VFXEventTest), true, true, true, true);
-                testsRList.drawHeaderCallback = OnDrawHeader;
-                testsRList.drawElementCallback = OnDrawElement;
-                testsRList.onAddCallback = OnTestAdd;
-                testsRList.onRemoveCallback = OnTestRemove;
-                testsRList.onSelectCallback = OnTestSelect;
+                if (testsRList == null || (testsRList.list != sceneEventTestComponent.eventTests))
+                {
+                    Debug.Log("Recreate RList");
+                    testsRList = new ReorderableList(sceneEventTestComponent.eventTests, typeof(VFXEventTest), true, true, true, true);
+                    testsRList.drawHeaderCallback = OnDrawHeader;
+                    testsRList.drawElementCallback = OnDrawElement;
+                    testsRList.onAddCallback = OnTestAdd;
+                    testsRList.onRemoveCallback = OnTestRemove;
+                    testsRList.onSelectCallback = OnTestSelect;
+                }
             }
         }
 
@@ -83,8 +95,15 @@ namespace UnityEditor.VFX
 
         void TesterSceneUpdate(SceneView sceneView)
         {
-            if (tests == null || Event.current.alt || Event.current.type == EventType.Layout || Event.current.type == EventType.Repaint)
+            if (tests == null || Event.current.type == EventType.Layout)
                 return;
+
+            if (Event.current.alt)
+            {
+                mouseLeft = false;
+                mouseRight = false;
+                return;
+            }
 
             bool used = false;
             foreach(var test in tests)
@@ -121,7 +140,7 @@ namespace UnityEditor.VFX
                 }
             }
             
-            if(used)
+            if(used && Event.current.type != EventType.Repaint)
             {
                 Selection.activeGameObject = null;
                 Event.current.Use();

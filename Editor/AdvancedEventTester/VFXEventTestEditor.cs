@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.VFX.EventTesting;
 using UnityEngine.VFX.Extras;
 
-namespace UnityEditor.VFX
+namespace UnityEditor.VFX.EventTesting
 {
     [CustomEditor(typeof(VFXEventTest))]
     public class VFXEventTestEditor : Editor
@@ -54,7 +55,8 @@ namespace UnityEditor.VFX
                 }
 
                 rect.xMin += 24;
-                GUI.Label(rect, ObjectNames.NicifyVariableName(item.FindPropertyRelative("name").stringValue));
+                string typeName = item.type.Remove(0, 16);
+                GUI.Label(rect, $"{item.FindPropertyRelative("attributeName").stringValue} : {typeName}");
             }
             else
                 GUI.Label(rect, "NULL");
@@ -65,6 +67,7 @@ namespace UnityEditor.VFX
         {
             m_AttributeMenu.ShowAsContext();
         }
+
 
         GenericMenu m_AttributeMenu;
         GenericMenu m_BehaviorMenu;
@@ -97,14 +100,14 @@ namespace UnityEditor.VFX
         {
             m_AttributeMenu = new GenericMenu();
             if (s_AttributeTypes == null)
-                s_AttributeTypes = FindConcreteSubclasses(typeof(EventAttributeSetup)).ToArray();
+                s_AttributeTypes = FindConcreteSubclasses(typeof(VFXEventAttributeSetup)).ToArray();
 
             foreach (var type in s_AttributeTypes)
             {
                 string name = ObjectNames.NicifyVariableName(type.Name);
                 string category = "";
 
-                var attr = type.GetCustomAttributes(typeof(EventAttributeSetupAttribute), false).FirstOrDefault() as EventAttributeSetupAttribute;
+                var attr = type.GetCustomAttributes(typeof(VFXEventAttributeSetupAttribute), false).FirstOrDefault() as VFXEventAttributeSetupAttribute;
                 if(attr != null)
                 {
                     if (!string.IsNullOrEmpty(attr.name))
@@ -121,7 +124,7 @@ namespace UnityEditor.VFX
         {
             m_BehaviorMenu = new GenericMenu();
             if (s_BehaviorTypes == null)
-                s_BehaviorTypes = FindConcreteSubclasses(typeof(EventTestUpdateBehavior)).ToArray();
+                s_BehaviorTypes = FindConcreteSubclasses(typeof(VFXEventSendUpdateBehavior)).ToArray();
 
             foreach (var type in s_BehaviorTypes)
             {
@@ -134,8 +137,7 @@ namespace UnityEditor.VFX
         {
             Type t = o as Type;
             Undo.RecordObject(serializedObject.targetObject, "Add Attribute");
-            var attrib = Activator.CreateInstance(t) as EventAttributeSetup;
-            attrib.name = t.Name;
+            var attrib = Activator.CreateInstance(t) as VFXEventAttributeSetup;
             if(attrib != null)
                 (serializedObject.targetObject as VFXEventTest).eventAttributes.Add(attrib);
         }
@@ -143,11 +145,16 @@ namespace UnityEditor.VFX
         void SetUpdateBehavior(object o)
         {
             Type t = o as Type;
-            Undo.RecordObject(serializedObject.targetObject, "Set Update Behavior");
-            var bh = Activator.CreateInstance(t) as EventTestUpdateBehavior;
+            Undo.RegisterCreatedObjectUndo(serializedObject.targetObject, "Set Update Behavior");
+            var bh = Activator.CreateInstance(t) as VFXEventSendUpdateBehavior;
             
             if (bh != null)
-                (serializedObject.targetObject as VFXEventTest).updateBehavior = bh;
+            {
+                var eventSetup = (serializedObject.targetObject as VFXEventTest);
+                eventSetup.updateBehavior = bh;
+                EditorUtility.SetDirty(eventSetup);
+                AssetDatabase.SaveAssets();
+            }
         }
 
         protected override void OnHeaderGUI()
@@ -182,7 +189,9 @@ namespace UnityEditor.VFX
 
             using (new GUILayout.HorizontalScope(Styles.header))
             {
-                GUILayout.Label("Update Behavior", Styles.headerSubLabel);
+                string typeName = testTarget.updateBehavior == null ? "null" : testTarget.updateBehavior.GetType().Name;
+
+                GUILayout.Label($"Update Behavior ({typeName})", Styles.headerSubLabel);
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("...", EditorStyles.miniButton, GUILayout.Width(24), GUILayout.Height(22)))
                 {
