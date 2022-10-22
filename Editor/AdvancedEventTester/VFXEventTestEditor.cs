@@ -162,10 +162,9 @@ namespace UnityEditor.VFX.EventTesting
             Rect r = GUILayoutUtility.GetRect(GUIContent.none, EditorStyles.miniButton, GUILayout.ExpandWidth(true), GUILayout.Height(8));
             r.height = 1;
             EditorGUI.DrawRect(r, Color.black);
-            bool isAsset = !string.IsNullOrEmpty(AssetDatabase.GetAssetPath(serializedObject.targetObject));
             using (new GUILayout.HorizontalScope(Styles.header))
             {
-                GUILayout.Label($"Selected VFXEventTest : {serializedObject.targetObject.name} ({(isAsset? "Asset" : "Saved in Scene")})", Styles.headerLabel);
+                GUILayout.Label($"{serializedObject.targetObject.name}", Styles.headerLabel);
             }
             GUILayout.Space(8);
 
@@ -223,7 +222,8 @@ namespace UnityEditor.VFX.EventTesting
 
                 using (new GUILayout.VerticalScope(Styles.header, GUILayout.Height(24)))
                 {
-                    GUILayout.Label(prop.displayName, Styles.headerLabel);
+                    string display = $"{prop.FindPropertyRelative("attributeName").stringValue} : {prop.type.Remove(0, 16)}";
+                    GUILayout.Label(display, Styles.headerLabel);
                 }
 
                 DrawItemPropertyWithoutFoldout(prop);

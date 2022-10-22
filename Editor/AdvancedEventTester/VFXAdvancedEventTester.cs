@@ -202,7 +202,9 @@ namespace UnityEditor.VFX.EventTesting
             if (tests[index] == null)
                 rect.width -= 32;
 
+            EditorGUI.BeginDisabledGroup(true);
             tests[index] = (VFXEventTest)EditorGUI.ObjectField(rect, tests[index], typeof(VFXEventTest), false);
+            EditorGUI.EndDisabledGroup();
 
             if(tests[index] == null)
             {
