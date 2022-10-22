@@ -41,6 +41,19 @@ namespace UnityEngine.VFX.Extras
         }
     }
 
+    [Serializable, VFXEventAttributeSetup("Float", "Float (Random from Curve)")]
+    public class RandomFloatFromCurve : VFXEventAttributeSetup
+    {
+        public string attributeName = "size";
+        public AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
+
+        public override void ApplyEventAttribute(VFXEventAttribute attrib)
+        {
+            if (attrib.HasFloat(attributeName))
+                attrib.SetFloat(attributeName, curve.Evaluate(UnityEngine.Random.Range(0f, 1f)));
+        }
+    }
+
     public enum RandomVectorMode
     {
         Uniform,
@@ -106,6 +119,83 @@ namespace UnityEngine.VFX.Extras
         }
     }
 
+    [Serializable, VFXEventAttributeSetup("Vector3", "Vector3 (GameObject Position)")]
+    public class Vector3FromPosition : VFXEventAttributeSetup
+    {
+        public string attributeName = "position";
+        public Transform transform;
+        public bool localPosition = false;
+
+        public override void ApplyEventAttribute(VFXEventAttribute attrib)
+        {
+            if (attrib.HasVector3(attributeName) && transform != null)
+                attrib.SetVector3(attributeName, localPosition? transform.localPosition : transform.position);
+        }
+    }
+
+    [Serializable, VFXEventAttributeSetup("Vector3", "Vector3 (GameObject Scale)")]
+    public class Vector3FromScale : VFXEventAttributeSetup
+    {
+        public string attributeName = "scale";
+        public Transform transform;
+        public bool localScale = false;
+
+        public override void ApplyEventAttribute(VFXEventAttribute attrib)
+        {
+            if (attrib.HasVector3(attributeName) && transform != null)
+                attrib.SetVector3(attributeName, localScale ? transform.localScale : transform.lossyScale);
+        }
+    }
+
+    [Serializable, VFXEventAttributeSetup("Vector3", "Vector3 (GameObject Axis)")]
+    public class Vector3FromTransformAxis : VFXEventAttributeSetup
+    {
+        public enum Axis
+        {
+            Forward,
+            Back,
+            Right,
+            Left,
+            Up,
+            Down
+        }
+
+        public string attributeName = "direction";
+        public Transform transform;
+        public Axis axis = Axis.Forward;
+
+        public override void ApplyEventAttribute(VFXEventAttribute attrib)
+        {
+            if (attrib.HasVector3(attributeName) && transform != null)
+            {
+                Vector3 dir = Vector3.zero;
+                switch (axis)
+                {
+                    default:
+                    case Axis.Forward:
+                        dir = transform.forward;
+                        break;
+                    case Axis.Back:
+                        dir = -transform.forward;
+                        break;
+                    case Axis.Right:
+                        dir = transform.right;
+                        break;
+                    case Axis.Left:
+                        dir = -transform.right;
+                        break;
+                    case Axis.Up:
+                        dir = transform.up;
+                        break;
+                    case Axis.Down:
+                        dir = -transform.up;
+                        break;
+                }
+                attrib.SetVector3(attributeName, dir);
+            }
+        }
+    }
+
     [Serializable, VFXEventAttributeSetup("Vector3", "Vector3 (Random)")]
     public class RandomVector3 : VFXEventAttributeSetup
     {
@@ -144,15 +234,21 @@ namespace UnityEngine.VFX.Extras
     public class ConstantHDRColor : VFXEventAttributeSetup
     {
         public string attributeName = "color";
-        [ColorUsage(false, true)]
+        [ColorUsage(true, true)]
         public Color value = Color.white;
-
+        public bool setAlpha = true;
+        public string alphaAttributeName = "alpha";
         public override void ApplyEventAttribute(VFXEventAttribute attrib)
         {
             if (attrib.HasVector3(attributeName))
             {
                 Vector3 rgb = new Vector3(value.r, value.g, value.b);
                 attrib.SetVector3(attributeName, rgb);
+            }
+
+            if(setAlpha && attrib.HasFloat(alphaAttributeName))
+            {
+                attrib.SetFloat(alphaAttributeName, value.a);
             }
         }
     }
@@ -161,37 +257,67 @@ namespace UnityEngine.VFX.Extras
     public class RandomHDRColor : VFXEventAttributeSetup
     {
         public string attributeName = "color";
-        [ColorUsage(false, true)]
+        [ColorUsage(true, true)]
         public Color min = Color.black;
-        [ColorUsage(false, true)]
+        [ColorUsage(true, true)]
         public Color max = Color.white;
         public RandomVectorMode randomMode = RandomVectorMode.PerComponent;
         public bool normalize;
+        public bool setAlpha = true;
+        public string alphaAttributeName = "alpha";
 
         public override void ApplyEventAttribute(VFXEventAttribute attrib)
         {
-            if (!attrib.HasVector3(attributeName))
-                return;
-
-            Vector3 value;
-            if (randomMode == RandomVectorMode.PerComponent)
-                value = new Vector3(
-                    Mathf.Lerp(min.r, max.r, UnityEngine.Random.Range(0f, 1f)),
-                    Mathf.Lerp(min.g, max.g, UnityEngine.Random.Range(0f, 1f)),
-                    Mathf.Lerp(min.b, max.b, UnityEngine.Random.Range(0f, 1f))
-                    );
-            else
+            if (attrib.HasVector3(attributeName))
             {
-                var r = UnityEngine.Random.Range(0f, 1f);
-                Vector3 minRgb = new Vector3(min.r, min.g, min.b);
-                Vector3 maxRgb = new Vector3(max.r, max.g, max.b);
-                value = Vector3.Lerp(minRgb, maxRgb, r);
+                Vector3 value;
+                if (randomMode == RandomVectorMode.PerComponent)
+                    value = new Vector3(
+                        Mathf.Lerp(min.r, max.r, UnityEngine.Random.Range(0f, 1f)),
+                        Mathf.Lerp(min.g, max.g, UnityEngine.Random.Range(0f, 1f)),
+                        Mathf.Lerp(min.b, max.b, UnityEngine.Random.Range(0f, 1f))
+                        );
+                else
+                {
+                    var r = UnityEngine.Random.Range(0f, 1f);
+                    Vector3 minRgb = new Vector3(min.r, min.g, min.b);
+                    Vector3 maxRgb = new Vector3(max.r, max.g, max.b);
+                    value = Vector3.Lerp(minRgb, maxRgb, r);
+                }
+
+                if (normalize)
+                    value.Normalize();
+
+                attrib.SetVector3(attributeName, value);
             }
 
-            if (normalize)
-                value.Normalize();
+            if (setAlpha && attrib.HasFloat(alphaAttributeName))
+            {
+                attrib.SetFloat(alphaAttributeName, UnityEngine.Random.Range(min.a, max.a));
+            }
+        }
+    }
 
-            attrib.SetVector3(attributeName, value);
+    [Serializable, VFXEventAttributeSetup("Color HDR", "Color HDR (Random from Gradient)")]
+    public class RandomHDRColorFromGradient : VFXEventAttributeSetup
+    {
+        public string attributeName = "color";
+        public bool setAlpha = true;
+        public string alphaAttributeName = "alpha";
+        [GradientUsage(hdr : true)]
+        public Gradient gradient = new Gradient();
+
+        public override void ApplyEventAttribute(VFXEventAttribute attrib)
+        {
+            if (attrib.HasVector3(attributeName))
+            {
+                Color c = gradient.Evaluate(UnityEngine.Random.Range(0f, 1f));
+
+                attrib.SetVector3(attributeName, new Vector3(c.r, c.g, c.b));
+
+                if (setAlpha && attrib.HasFloat(alphaAttributeName))
+                    attrib.SetFloat(alphaAttributeName, c.a);
+            }
         }
     }
 }
