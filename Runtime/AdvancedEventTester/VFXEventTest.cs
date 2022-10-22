@@ -55,15 +55,16 @@ namespace UnityEngine.VFX.EventTesting
         {
             if (updateBehavior != null)
             {
-                updateBehavior.Reset(this, currentTime);
+                updateBehavior.OnStart(this, vfx, currentTime);
                 vfx.SendEvent(startEventName, ApplyEventAttribute(vfx.CreateVFXEventAttribute()));
             }
         }
 
-        public void StopTest(VisualEffect vfx)
+        public void StopTest(VisualEffect vfx, float currentTime)
         {
             if (updateBehavior != null)
             {
+                updateBehavior.OnStop(this, vfx, currentTime);
                 vfx.SendEvent(stopEventName, ApplyEventAttribute(vfx.CreateVFXEventAttribute()));
             }
         }

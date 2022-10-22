@@ -192,7 +192,7 @@ namespace UnityEditor.VFX.EventTesting
                     }
                     else
                     {
-                        tests[index].StopTest(visualEffect);
+                        tests[index].StopTest(visualEffect, (float)EditorApplication.timeSinceStartup);
                     }
                 }
             }
@@ -201,8 +201,10 @@ namespace UnityEditor.VFX.EventTesting
             b = rect;
             b.width = 28;
 
+            EditorGUI.BeginDisabledGroup(!tests[index].updateBehavior.canSendSingleEvent);
             if (GUI.Button(b, "▶"))
                 tests[index]?.PerformSingleEvent(visualEffect);
+            EditorGUI.EndDisabledGroup();
 
             rect.xMin += 32;
 

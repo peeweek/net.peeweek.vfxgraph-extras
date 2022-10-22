@@ -10,13 +10,29 @@ namespace UnityEngine.VFX.EventTesting
     [Serializable]
     public abstract class VFXEventSendUpdateBehavior
     {
+        public virtual bool canSendSingleEvent => true;
+
         public virtual bool canUseTool => false;
 
-        public abstract void Reset(VFXEventTest test, float currentTime);
         public abstract void Update(VFXEventTest test, VisualEffect vfx, float currentTime);
+
+        public abstract void OnStart(VFXEventTest test, VisualEffect vfx, float currentTime);
+
+        public abstract void OnStop(VFXEventTest test, VisualEffect vfx, float currentTime);
 
         public virtual bool OnSceneGUIUpdate(Camera camera, Vector2 mousePosition, bool mouseLeft, bool mouseRight, float currentTime) => false;
 
+    }
+
+    [Serializable]
+    public class EmptyBehavior : VFXEventSendUpdateBehavior
+    {
+
+        public override void OnStart(VFXEventTest test, VisualEffect vfx, float currentTime) { }
+
+        public override void OnStop(VFXEventTest test, VisualEffect vfx, float currentTime) { }
+
+        public override void Update(VFXEventTest test, VisualEffect vfx, float currentTime) { }
     }
 
     [Serializable]
@@ -27,10 +43,12 @@ namespace UnityEngine.VFX.EventTesting
 
         double m_Time = -1.0;
 
-        public override void Reset(VFXEventTest test, float currentTime)
+        public override void OnStart(VFXEventTest test, VisualEffect vfx, float currentTime)
         {
             m_Time = currentTime;
         }
+
+        public override void OnStop(VFXEventTest test, VisualEffect vfx, float currentTime) { }
 
         public override void Update(VFXEventTest test, VisualEffect vfx, float currentTime)
         {
@@ -39,7 +57,7 @@ namespace UnityEngine.VFX.EventTesting
 
             if ((m_Time == -1)|| ((currentTime - m_Time) > periodicity))
             {
-                Reset(test, currentTime);
+                OnStart(test, vfx, currentTime);
                 test.PerformSingleEvent(vfx);
             }
         }
@@ -48,6 +66,7 @@ namespace UnityEngine.VFX.EventTesting
     [Serializable]
     public class OnClickUpdateBehaviour : VFXEventSendUpdateBehavior
     {
+        public override bool canSendSingleEvent => false;
         public override bool canUseTool => true;
 
         public float shootInterval = 1.0f;
@@ -67,11 +86,13 @@ namespace UnityEngine.VFX.EventTesting
         float m_TTL;
         double m_Time;
 
-        public override void Reset(VFXEventTest test, float currentTime)
+        public override void OnStart(VFXEventTest test, VisualEffect vfx, float currentTime)
         {
             m_TTL = 0f;
             m_Time = currentTime;
         }
+
+        public override void OnStop(VFXEventTest test, VisualEffect vfx, float currentTime) { }
 
         public override bool OnSceneGUIUpdate(Camera camera, Vector2 mousePosition, bool mouseLeft, bool mouseRight, float currentTime)
         {
