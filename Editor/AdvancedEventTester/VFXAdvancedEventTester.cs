@@ -73,7 +73,7 @@ namespace UnityEditor.VFX.EventTesting
             {
                 if (testsRList == null || (testsRList.list != sceneEventTestComponent.eventTests))
                 {
-                    Debug.Log("Recreate RList");
+                    //Debug.Log("Recreate RList");
                     testsRList = new ReorderableList(sceneEventTestComponent.eventTests, typeof(VFXEventTest), true, true, true, true);
                     testsRList.drawHeaderCallback = OnDrawHeader;
                     testsRList.drawElementCallback = OnDrawElement;
