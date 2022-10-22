@@ -2,26 +2,27 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.VFX;
+using UnityEngine.VFX.Extras;
 using UnityEngine.VFX.Utility;
 
-namespace UnityEngine.VFX.Extras
+namespace UnityEngine.VFX.EventTesting
 {
-    [CreateAssetMenu(fileName = "New VFX Event Test", menuName = "Visual Effects/VFX Event Test")]
     public class VFXEventTest : ScriptableObject
     {
         public string eventName = "Event";
 
         [SerializeReference]
-        public List<EventAttributeSetup> eventAttributes = new List<EventAttributeSetup>();
+        public List<VFXEventAttributeSetup> eventAttributes = new List<VFXEventAttributeSetup>();
 
         [SerializeReference]
-        public EventTestUpdateBehavior updateBehavior;
+        public VFXEventSendUpdateBehavior updateBehavior;
 
         VFXEventAttribute attribute;
 
         private void Awake()
         {
-            updateBehavior = new ConstantRateBehavior();
+            if(updateBehavior == null)
+                updateBehavior = new ConstantRateBehavior();
         }
 
         public void PerformEvent(VisualEffect vfx, VFXEventAttribute attribute = null)

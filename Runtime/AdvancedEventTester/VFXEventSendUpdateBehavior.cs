@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.VFX;
+using UnityEngine.VFX.EventTesting;
 using UnityEngine.VFX.Utility;
 
-namespace UnityEngine.VFX.Extras
+namespace UnityEngine.VFX.EventTesting
 {
-
     [Serializable]
-    public abstract class EventTestUpdateBehavior
+    public abstract class VFXEventSendUpdateBehavior
     {
         public virtual bool canUseTool => false;
 
@@ -22,7 +22,7 @@ namespace UnityEngine.VFX.Extras
     }
 
     [Serializable]
-    public class ConstantRateBehavior : EventTestUpdateBehavior
+    public class ConstantRateBehavior : VFXEventSendUpdateBehavior
     {
         [Min(0.0f)]
         public float periodicity = 1.0f;
@@ -48,11 +48,16 @@ namespace UnityEngine.VFX.Extras
     }
 
     [Serializable]
-    public class GatlingRaycastBehavior : EventTestUpdateBehavior
+    public class OnClickUpdateBehaviour : VFXEventSendUpdateBehavior
     {
         public override bool canUseTool => true;
 
         public float shootInterval = 1.0f;
+
+        bool shooting = false;
+        bool impact = false;
+        Vector3 impactPosition;
+        Vector3 impactNormal;
 
         float m_TTL;
         double m_Time;
@@ -70,9 +75,12 @@ namespace UnityEngine.VFX.Extras
 
             if (mouseLeft)
             {
-                m_TTL = 0f;
-                shooting = true;
-                ProcessShoot(mousePosition, camera);
+                if(!shooting)
+                {
+                    m_TTL = 0f;
+                    ProcessShoot(mousePosition, camera);
+                    shooting = true;
+                }
             }
             else
             {
@@ -81,23 +89,20 @@ namespace UnityEngine.VFX.Extras
 
             if(shooting)
             {
-                m_TTL += deltaTime;
-                if (m_TTL > shootInterval)
+                if (m_TTL >= shootInterval)
                 {
                     ProcessShoot(mousePosition, camera);
-                    m_TTL = 0f;
+                    m_TTL -= shootInterval;
                 }
+
+                m_TTL += deltaTime;
+
                 return true;
             }
             else
                 return false;
 
         }
-
-        bool shooting = false;
-        bool impact = false;
-        Vector3 impactPosition;
-        Vector3 impactNormal;
 
         public void ProcessShoot(Vector2 mousePosition, Camera camera)
         {

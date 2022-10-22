@@ -6,17 +6,16 @@ using UnityEngine.VFX.Utility;
 namespace UnityEngine.VFX.Extras
 {
     [Serializable]
-    public abstract class EventAttributeSetup
+    public abstract class VFXEventAttributeSetup
     {
-        public string name;
         public bool enabled = true;
 
         public abstract void ApplyEventAttribute(VFXEventAttribute attrib);
     }
 
 
-    [Serializable, EventAttributeSetup("Float", "Float (Constant)")]
-    public class ConstantFloat : EventAttributeSetup
+    [Serializable, VFXEventAttributeSetup("Float", "Float (Constant)")]
+    public class ConstantFloat : VFXEventAttributeSetup
     {
         public string attributeName = "size";
         public float value = 1.0f;
@@ -28,8 +27,8 @@ namespace UnityEngine.VFX.Extras
         }
     }
 
-    [Serializable, EventAttributeSetup("Float", "Float (Random)")]
-    public class RandomFloat : EventAttributeSetup
+    [Serializable, VFXEventAttributeSetup("Float", "Float (Random)")]
+    public class RandomFloat : VFXEventAttributeSetup
     {
         public string attributeName = "size";
         public float min = 0.0f;
@@ -48,8 +47,8 @@ namespace UnityEngine.VFX.Extras
         PerComponent
     }
 
-    [Serializable, EventAttributeSetup("Vector2", "Vector2 (Constant)")]
-    public class ConstantVector2 : EventAttributeSetup
+    [Serializable, VFXEventAttributeSetup("Vector2", "Vector2 (Constant)")]
+    public class ConstantVector2 : VFXEventAttributeSetup
     {
         public string attributeName = "position";
         public Vector2 value = Vector2.one;
@@ -61,8 +60,8 @@ namespace UnityEngine.VFX.Extras
         }
     }
 
-    [Serializable, EventAttributeSetup("Vector2", "Vector2 (Random)")]
-    public class RandomVector2 : EventAttributeSetup
+    [Serializable, VFXEventAttributeSetup("Vector2", "Vector2 (Random)")]
+    public class RandomVector2 : VFXEventAttributeSetup
     {
         public string attributeName = "position";
         public Vector2 min = Vector2.zero;
@@ -94,8 +93,8 @@ namespace UnityEngine.VFX.Extras
         }
     }
 
-    [Serializable, EventAttributeSetup("Vector3", "Vector3 (Constant)")]
-    public class ConstantVector3 : EventAttributeSetup
+    [Serializable, VFXEventAttributeSetup("Vector3", "Vector3 (Constant)")]
+    public class ConstantVector3 : VFXEventAttributeSetup
     {
         public string attributeName = "position";
         public Vector3 value = Vector3.one;
@@ -107,8 +106,8 @@ namespace UnityEngine.VFX.Extras
         }
     }
 
-    [Serializable, EventAttributeSetup("Vector3", "Vector3 (Random)")]
-    public class RandomVector3 : EventAttributeSetup
+    [Serializable, VFXEventAttributeSetup("Vector3", "Vector3 (Random)")]
+    public class RandomVector3 : VFXEventAttributeSetup
     {
         public string attributeName = "position";
         public Vector3 min = Vector3.zero;
@@ -141,8 +140,8 @@ namespace UnityEngine.VFX.Extras
         }
     }
 
-    [Serializable, EventAttributeSetup("Color HDR", "Color HDR (Constant)")]
-    public class ConstantHDRColor : EventAttributeSetup
+    [Serializable, VFXEventAttributeSetup("Color HDR", "Color HDR (Constant)")]
+    public class ConstantHDRColor : VFXEventAttributeSetup
     {
         public string attributeName = "color";
         [ColorUsage(false, true)]
@@ -158,8 +157,8 @@ namespace UnityEngine.VFX.Extras
         }
     }
 
-    [Serializable, EventAttributeSetup("Color HDR", "Color HDR (Random)")]
-    public class RandomHDRColor : EventAttributeSetup
+    [Serializable, VFXEventAttributeSetup("Color HDR", "Color HDR (Random)")]
+    public class RandomHDRColor : VFXEventAttributeSetup
     {
         public string attributeName = "color";
         [ColorUsage(false, true)]

@@ -6,12 +6,12 @@ using UnityEngine;
 namespace UnityEngine.VFX.Extras
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public class EventAttributeSetupAttribute : Attribute
+    public class VFXEventAttributeSetupAttribute : Attribute
     {
         public readonly string category;
         public readonly string name;
 
-        public EventAttributeSetupAttribute(string category = "", string name = "")
+        public VFXEventAttributeSetupAttribute(string category = "", string name = "")
         {
             this.category = category;
             this.name = name;
