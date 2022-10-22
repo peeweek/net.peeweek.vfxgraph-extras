@@ -137,3 +137,10 @@ Output Camera provides values from the "Current Rendering Camera" that is used t
 ![](https://user-images.githubusercontent.com/4037271/194754662-3e71045b-4707-4d5b-bcb8-11df5a0b3310.gif)
 
 Navigator handles populating and displaying contents of the graph as a tree view. You can filter it in order to search for nodes .
+
+### Advanced Event Tester
+
+The advanced event tester is a tool that enables to create and store test environments for sending Events to Visual Effects and setting up Event Attribute Payloads.
+
+https://user-images.githubusercontent.com/4037271/197322716-9f7967dd-5273-4b36-b5b4-3b4e055e4952.mp4
+
