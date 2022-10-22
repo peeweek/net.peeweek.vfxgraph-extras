@@ -54,6 +54,13 @@ namespace UnityEngine.VFX.EventTesting
 
         public float shootInterval = 1.0f;
 
+        [Header("Position")]
+        public bool applyPosition = true;
+        public string positionAttribute = "position";
+        [Header("Direction")]
+        public bool applyDirection = true;
+        public string directionAttribute = "direction";
+
         bool shooting = false;
         bool impact = false;
         Vector3 impactPosition;
@@ -123,8 +130,12 @@ namespace UnityEngine.VFX.EventTesting
             if(shooting && impact)
             {
                 VFXEventAttribute attr = vfx.CreateVFXEventAttribute();
-                attr.SetVector3("position", impactPosition);
-                attr.SetVector3("direction", impactNormal);
+                if(applyPosition)
+                    attr.SetVector3(positionAttribute, impactPosition);
+
+                if(applyDirection)
+                    attr.SetVector3(directionAttribute, impactNormal);
+
                 test.PerformEvent(vfx, attr);
                 impact = false;
             }
