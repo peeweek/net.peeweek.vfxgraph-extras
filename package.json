@@ -1,7 +1,7 @@
 {
   "name": "net.peeweek.vfxgraph-extras",
   "displayName": "Visual Effect Graph (Extras)",
-  "version": "2020.3.7",
+  "version": "2020.3.8",
   "unity": "2020.3",
   "dependencies": {
     "com.unity.visualeffectgraph": "10.0.0",
