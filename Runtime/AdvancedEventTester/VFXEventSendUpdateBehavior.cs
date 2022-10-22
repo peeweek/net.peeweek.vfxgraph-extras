@@ -12,8 +12,6 @@ namespace UnityEngine.VFX.EventTesting
     {
         public virtual bool canUseTool => false;
 
-        public bool enableUpdate = true;
-
         public abstract void Reset(VFXEventTest test, float currentTime);
         public abstract void Update(VFXEventTest test, VisualEffect vfx, float currentTime);
 
@@ -42,7 +40,7 @@ namespace UnityEngine.VFX.EventTesting
             if ((m_Time == -1)|| ((currentTime - m_Time) > periodicity))
             {
                 Reset(test, currentTime);
-                test.PerformEvent(vfx);
+                test.PerformSingleEvent(vfx);
             }
         }
     }
@@ -136,7 +134,7 @@ namespace UnityEngine.VFX.EventTesting
                 if(applyDirection)
                     attr.SetVector3(directionAttribute, impactNormal);
 
-                test.PerformEvent(vfx, attr);
+                test.PerformSingleEvent(vfx, attr);
                 impact = false;
             }
         }

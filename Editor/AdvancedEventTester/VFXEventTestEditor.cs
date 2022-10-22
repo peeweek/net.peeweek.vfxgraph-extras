@@ -12,7 +12,12 @@ namespace UnityEditor.VFX.EventTesting
     [CustomEditor(typeof(VFXEventTest))]
     public class VFXEventTestEditor : Editor
     {
-        SerializedProperty eventName;
+        SerializedProperty enableUpdate;
+        SerializedProperty singleEventName;
+        SerializedProperty enableStartEvent;
+        SerializedProperty startEventName;
+        SerializedProperty enableStopEvent;
+        SerializedProperty stopEventName;
         SerializedProperty eventAttributes;
         SerializedProperty updateBehavior;
 
@@ -20,7 +25,12 @@ namespace UnityEditor.VFX.EventTesting
 
         private void OnEnable()
         {
-            eventName = serializedObject.FindProperty("eventName");
+            enableUpdate = serializedObject.FindProperty("enableUpdate");
+            singleEventName = serializedObject.FindProperty("singleEventName");
+            enableStartEvent = serializedObject.FindProperty("enableStartEvent");
+            startEventName = serializedObject.FindProperty("startEventName");
+            enableStopEvent = serializedObject.FindProperty("enableStopEvent");
+            stopEventName = serializedObject.FindProperty("stopEventName");
             updateBehavior = serializedObject.FindProperty("updateBehavior");
 
             eventAttributes = serializedObject.FindProperty("eventAttributes");
@@ -182,7 +192,43 @@ namespace UnityEditor.VFX.EventTesting
                 serializedObject.targetObject.name = n;
             }
             EditorGUI.EndDisabledGroup();
-            EditorGUILayout.PropertyField(eventName);
+
+            EditorGUILayout.PropertyField(enableUpdate);
+            EditorGUILayout.Space();
+
+            EditorGUILayout.PropertyField(singleEventName);
+            EditorGUILayout.Space();
+
+            using(new GUILayout.HorizontalScope())
+            {
+                GUILayout.Space(20);
+                EditorGUI.BeginChangeCheck();
+                bool value = GUILayout.Toggle(enableStartEvent.boolValue, GUIContent.none, GUILayout.Width(16));
+                if(EditorGUI.EndChangeCheck())
+                {
+                    enableStartEvent.boolValue = value;
+                }
+                EditorGUI.BeginDisabledGroup(!enableStartEvent.boolValue);
+                EditorGUILayout.PropertyField(startEventName);
+                EditorGUI.EndDisabledGroup();
+            }
+
+            EditorGUILayout.Space();
+
+            using (new GUILayout.HorizontalScope())
+            {
+                GUILayout.Space(20);
+                EditorGUI.BeginChangeCheck();
+                bool value = GUILayout.Toggle(enableStopEvent.boolValue, GUIContent.none, GUILayout.Width(16));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    enableStopEvent.boolValue = value;
+                }
+                EditorGUI.BeginDisabledGroup(!enableStopEvent.boolValue);
+                EditorGUILayout.PropertyField(stopEventName);
+                EditorGUI.EndDisabledGroup();
+            }
+
 
             var testTarget = serializedObject.targetObject as VFXEventTest;
 

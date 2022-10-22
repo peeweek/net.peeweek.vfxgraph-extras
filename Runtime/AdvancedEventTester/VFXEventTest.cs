@@ -9,7 +9,13 @@ namespace UnityEngine.VFX.EventTesting
 {
     public class VFXEventTest : ScriptableObject
     {
-        public string eventName = "Event";
+        public bool enableUpdate = true;
+
+        public string singleEventName = "Event";
+        public bool enableStartEvent = true;
+        public string startEventName = "OnPlay";
+        public bool enableStopEvent = true;
+        public string stopEventName = "OnStop";
 
         [SerializeReference]
         public List<VFXEventAttributeSetup> eventAttributes = new List<VFXEventAttributeSetup>();
@@ -25,11 +31,16 @@ namespace UnityEngine.VFX.EventTesting
                 updateBehavior = new ConstantRateBehavior();
         }
 
-        public void PerformEvent(VisualEffect vfx, VFXEventAttribute attribute = null)
+        public void PerformSingleEvent(VisualEffect vfx, VFXEventAttribute attribute = null)
         {
-            if(attribute == null)
+            if (attribute == null)
                 attribute = vfx.CreateVFXEventAttribute();
 
+            vfx.SendEvent(singleEventName, ApplyEventAttribute(attribute));
+        }
+
+        VFXEventAttribute ApplyEventAttribute(VFXEventAttribute attribute)
+        {
             foreach (var evtAttr in eventAttributes)
             {
                 if (evtAttr == null || !evtAttr.enabled)
@@ -37,19 +48,29 @@ namespace UnityEngine.VFX.EventTesting
 
                 evtAttr.ApplyEventAttribute(attribute);
             }
-
-            vfx.SendEvent(eventName, attribute);
+            return attribute;
         }
 
-        public void ResetTest(VisualEffect vfx, float currentTime)
+        public void StartTest(VisualEffect vfx, float currentTime)
         {
             if (updateBehavior != null)
+            {
                 updateBehavior.Reset(this, currentTime);
+                vfx.SendEvent(startEventName, ApplyEventAttribute(vfx.CreateVFXEventAttribute()));
+            }
+        }
+
+        public void StopTest(VisualEffect vfx)
+        {
+            if (updateBehavior != null)
+            {
+                vfx.SendEvent(stopEventName, ApplyEventAttribute(vfx.CreateVFXEventAttribute()));
+            }
         }
 
         public void UpdateTest(VisualEffect vfx, float currentTime)
         {
-            if (updateBehavior != null && updateBehavior.enableUpdate)
+            if (updateBehavior != null && enableUpdate)
                 updateBehavior.Update(this, vfx, currentTime);
         }
 

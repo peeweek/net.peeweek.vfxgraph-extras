@@ -114,7 +114,7 @@ namespace UnityEditor.VFX.EventTesting
                 if (!test.updateBehavior.canUseTool)
                     continue;
 
-                if (test.updateBehavior.enableUpdate)
+                if (test.enableUpdate)
                 {
                     Vector2 mousePosition = Event.current.mousePosition;
                     mousePosition.y = (SceneView.lastActiveSceneView.position.height - 22) - mousePosition.y;
@@ -183,10 +183,17 @@ namespace UnityEditor.VFX.EventTesting
             else
             {
                 EditorGUI.BeginChangeCheck();
-                tests[index].updateBehavior.enableUpdate = GUI.Toggle(b, tests[index].updateBehavior.enableUpdate, Contents.Refresh, EditorStyles.miniButton);
-                if(EditorGUI.EndChangeCheck() && tests[index].updateBehavior.enableUpdate)
+                tests[index].enableUpdate = GUI.Toggle(b, tests[index].enableUpdate, Contents.Refresh, EditorStyles.miniButton);
+                if(EditorGUI.EndChangeCheck() )
                 {
-                    tests[index].ResetTest(visualEffect, (float)EditorApplication.timeSinceStartup);
+                    if(tests[index].enableUpdate)
+                    {
+                        tests[index].StartTest(visualEffect, (float)EditorApplication.timeSinceStartup);
+                    }
+                    else
+                    {
+                        tests[index].StopTest(visualEffect);
+                    }
                 }
             }
 
@@ -195,7 +202,7 @@ namespace UnityEditor.VFX.EventTesting
             b.width = 28;
 
             if (GUI.Button(b, "▶"))
-                tests[index]?.PerformEvent(visualEffect);
+                tests[index]?.PerformSingleEvent(visualEffect);
 
             rect.xMin += 32;
 
