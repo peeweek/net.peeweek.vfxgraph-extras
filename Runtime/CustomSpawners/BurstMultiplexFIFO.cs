@@ -16,17 +16,11 @@ namespace UnityEditor.VFX
         static readonly int spawnCount = Shader.PropertyToID("spawnCount");
         static readonly int countScale = Shader.PropertyToID("CountScale");
 
-        Queue<VFXEventAttribute> attributeQueue;
-        Queue<VFXEventAttribute> available;
+        Queue<VFXEventAttribute> attributeQueue = new Queue<VFXEventAttribute>();
+        Queue<VFXEventAttribute> available = new Queue<VFXEventAttribute>();
 
         public override void OnPlay(VFXSpawnerState state, VFXExpressionValues vfxValues, VisualEffect vfxComponent)
         {
-            if (attributeQueue == null)
-                attributeQueue = new Queue<VFXEventAttribute>();
-
-            if(available == null)
-                available = new Queue<VFXEventAttribute>();
-
             if(available.Count == 0)
                 available.Enqueue(vfxComponent.CreateVFXEventAttribute());
 
