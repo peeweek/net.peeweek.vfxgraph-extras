@@ -112,7 +112,7 @@ namespace UnityEditor.VFX.UI
             needReloadNavigator = false;
         }
 
-        class VFXNavigatorTreeView : TreeView
+        class VFXNavigatorTreeView : IMGUI.Controls.TreeView
         {
             VFXViewWindow m_Window;
             VFXView m_VFXView;
