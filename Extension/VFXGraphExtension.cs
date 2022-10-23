@@ -49,6 +49,11 @@ static partial class VFXGraphExtension
             UpdateDebugInfo(window);
             Profiler.EndSample();
         }
+
+        if(!navigators.ContainsKey(window))
+        {
+            InitializeNavigator(window);
+        }
     }
 
     static void OnKeyDown(KeyDownEvent e)
@@ -133,6 +138,7 @@ static partial class VFXGraphExtension
             button.style.width = 24;
             button.style.height = 16;
             Add(button);
+
         }
 
         void OnClick()
@@ -152,9 +158,9 @@ static partial class VFXGraphExtension
                 m.AddSeparator("");
                 m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach, this.window);
                 m.AddItem(new GUIContent("Show Debug Stats"), GetDebugInfoVisible(window.displayedResource.asset), ToggleSpawnerStats, this.window);
+                m.AddItem(new GUIContent("Navigator #N"), navigatorVisibility[this.window], ToggleNavigatorMenu, this.window);
                 m.ShowAsContext();
             }
-
         }
     }
 
