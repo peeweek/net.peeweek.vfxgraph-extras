@@ -18,6 +18,14 @@ namespace UnityEngine.VFX.VirtualImpacts
         public ExposedProperty DefaultStartEvent = "OnPlay";
         public ExposedProperty DefaultEndEvent = "OnStop";
 
+        [Header("Attributes")]
+        public bool ForwardLifetime = true;
+        public ExposedProperty LifetimeAttribute = "lifetime";
+        public bool ForwardBoundsCenter = true;
+        public ExposedProperty BoundsCenterAttribute = "position";
+        public bool ForwardBoundsSize = true;
+        public ExposedProperty BoundsSizeAttribute = "size";
+
         [Header("Bounds")]
         public ExposedProperty BoundsAABoxProperty = "Bounds";
         [SerializeField, HideInInspector]
@@ -34,20 +42,36 @@ namespace UnityEngine.VFX.VirtualImpacts
 
         public class Impact
         {
+            VFXVirtualImpact virtualImpact;
             public int startEventID;
             public int endEventID;
             public Bounds Bounds;
             public float TTL;
             public VFXEventAttribute EventAttribute;
 
-            public Impact(VisualEffect vfx, int startEventID, int endEventID)
+            public Impact(VFXVirtualImpact virtualImpact)
             {
-                this.startEventID = startEventID;
-                this.endEventID = endEventID;
+                this.virtualImpact = virtualImpact;
+                this.startEventID = virtualImpact.DefaultStartEvent;
+                this.endEventID = virtualImpact.DefaultEndEvent;
                 this.Bounds = new Bounds(Vector3.zero, Vector3.one);
                 this.TTL = -1f;
-                this.EventAttribute = vfx.CreateVFXEventAttribute();
+                this.EventAttribute = virtualImpact.visualEffect.CreateVFXEventAttribute();
             }
+
+            public void Spawn()
+            {
+                virtualImpact.Spawn(this);
+            }
+
+            public void SetUint(int eventNameID, uint value) => EventAttribute?.SetUint(eventNameID, value);
+            public void SetInt(int eventNameID, int value) => EventAttribute?.SetInt(eventNameID, value);
+            public void SetBool(int eventNameID, bool value) => EventAttribute?.SetBool(eventNameID, value);
+            public void SetFloat(int eventNameID, float value) => EventAttribute?.SetFloat(eventNameID, value);
+            public void SetVector2(int eventNameID, Vector2 value) => EventAttribute?.SetVector2(eventNameID, value);
+            public void SetVector3(int eventNameID, Vector3 value) => EventAttribute?.SetVector3(eventNameID, value);
+            public void SetVector4(int eventNameID, Vector4 value) => EventAttribute?.SetVector4(eventNameID, value);
+            public void SetMatrix4x4(int eventNameID, Matrix4x4 value) => EventAttribute?.SetMatrix4x4(eventNameID, value);
         }
 
         public bool IsValid() => (Asset != null && MaxInstanceCount > 0);
@@ -62,7 +86,7 @@ namespace UnityEngine.VFX.VirtualImpacts
         {
             if (visualEffect == null)
             {
-                var gameObject = new GameObject($"VFXVirtualImpact : {this.name}");
+                var gameObject = new GameObject($"{this.name} ({this.Asset.name})");
                 visualEffect = gameObject.AddComponent<VisualEffect>();
                 visualEffect.visualEffectAsset = Asset;
 
@@ -72,7 +96,7 @@ namespace UnityEngine.VFX.VirtualImpacts
 
                 for (uint i = 0; i < MaxInstanceCount; i++)
                 {
-                    instances[i] = new Impact(visualEffect, DefaultStartEvent, DefaultEndEvent);
+                    instances[i] = new Impact(this);
                     available.Enqueue(i);
                 }
                 UpdateBounds();
@@ -84,9 +108,13 @@ namespace UnityEngine.VFX.VirtualImpacts
 
         private void DisposeVirtualImpactGameObject()
         {
-            Destroy(visualEffect.gameObject);
-            visualEffect = null;
-            instances = null;
+            // Dispose if not already disposed (i.e Game Shutdown)
+            if(visualEffect.gameObject != null)
+            {
+                Destroy(visualEffect.gameObject);
+                visualEffect = null;
+                instances = null;
+            }
         }
 
         private bool TryGetImpact(float lifeTime, out Impact impact)
@@ -107,8 +135,17 @@ namespace UnityEngine.VFX.VirtualImpacts
             }
         }
 
-        private void SpawnImpact(Impact impact)
+        private void Spawn(Impact impact)
         {
+            if (ForwardLifetime)
+                impact.EventAttribute.SetFloat(LifetimeAttribute, impact.TTL);
+
+            if (ForwardBoundsCenter)
+                impact.EventAttribute.SetVector3(BoundsCenterAttribute, impact.Bounds.center);
+
+            if (ForwardBoundsSize)
+                impact.EventAttribute.SetVector3(BoundsSizeAttribute, impact.Bounds.size);
+
             visualEffect.SendEvent(impact.startEventID, impact.EventAttribute);
             UpdateBounds();
         }

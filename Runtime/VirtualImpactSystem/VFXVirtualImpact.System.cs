@@ -10,7 +10,7 @@ namespace UnityEngine.VFX.VirtualImpacts
         static VFXVirtualImpactUpdater updater = null;
         static List<VFXVirtualImpact> virtualImpacts;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Initialize()
         {
             systemsRoot = new GameObject("VFXVirtualImpactSystem");
@@ -31,7 +31,7 @@ namespace UnityEngine.VFX.VirtualImpacts
             }
         }
 
-        public static void RemoveVirtualImpact(VFXVirtualImpact virtualImpact)
+        public static void DisposeVirtualImpact(VFXVirtualImpact virtualImpact)
         {
             if (virtualImpacts.Contains(virtualImpact))
             {
@@ -40,16 +40,10 @@ namespace UnityEngine.VFX.VirtualImpacts
             }
         }
 
-        public static bool TryGetImpactInstance(VFXVirtualImpact virtualImpact, float lifeTime, out Impact instance)
+        public static bool TryGetImpact(VFXVirtualImpact virtualImpact, float lifeTime, out Impact instance)
         {
             CreateVirtualImpact(virtualImpact);
             return virtualImpact.TryGetImpact(lifeTime, out instance);
-        }
-
-        public static void SendImpact(VFXVirtualImpact impact, Impact instance)
-        {
-            CreateVirtualImpact(impact);
-            impact.SpawnImpact(instance);
         }
 
         public static void UpdateAll(float deltaTime)
@@ -71,15 +65,14 @@ namespace UnityEngine.VFX.VirtualImpacts
                 GUILayout.Space(16);
                 foreach (var s in virtualImpacts)
                 {
-                    GUILayout.Label($"> {s.name} ({s.Asset.name}) ({s.available.Count} available)");
-                    GUILayout.Label($"> {s.bounds}");
+                    GUILayout.Label($"> {s.name} ({s.Asset.name}) ({s.available.Count} available) {s.bounds}");
                     for (int i = 0; i<s.instances.Length; i++)
                     {
                         var instance = s.instances[i];
                         if (instance.TTL < 0f)
                             continue;
 
-                        GUILayout.Label($"     -> [{i}]({instance.TTL.ToString("F2")}) {instance.Bounds.center},{instance.Bounds.size}");
+                        GUILayout.Label($"     -> [{i.ToString("D3")}] : ({instance.TTL.ToString("F2")}s) ({instance.Bounds.center},{instance.Bounds.size})");
 
                     }
                     GUILayout.Space(16);
