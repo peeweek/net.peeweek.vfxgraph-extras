@@ -8,19 +8,27 @@ namespace UnityEngine.VFX.VirtualImpacts
     [CreateAssetMenu(fileName = "New VFXVirtualImpact", menuName = "Visual Effects/VFX Virtual Impact")]
     public partial class VFXVirtualImpact : ScriptableObject
     {
+        [Tooltip("Visual Effect Asset to use for Virtual Instance")]
         public VisualEffectAsset Asset;
+        [Tooltip("Prefab to use (instead of Visual Effect Asset) for Virtual Instance")]
+        public GameObject Prefab;
 
         [Header("Instancing")]
-        [Min(1)]
+        [Min(1), Tooltip("Maximum instances allowed for this Virtual Instance")]
         public uint MaxInstanceCount = 64;
 
         [Header("Events")]
+        [Tooltip("Default Event to send when Instance is created")]
         public ExposedProperty DefaultStartEvent = "OnPlay";
+        [Tooltip("Default Event to send when Instance is recycled")]
         public ExposedProperty DefaultEndEvent = "OnStop";
 
         [Header("Attributes")]
+        [Tooltip("Do we send the instance lifetime to the VFXEventAttribute Payload?")]
         public bool ForwardLifetime = true;
+        [Tooltip("The VFXEventAttribute name where to store lifetime of the instance")]
         public ExposedProperty LifetimeAttribute = "lifetime";
+        [Tooltip("Do we send the instance bounds center to the VFXEventAttribute Payload?")]
         public bool ForwardBoundsCenter = true;
         public ExposedProperty BoundsCenterAttribute = "position";
         public bool ForwardBoundsSize = true;
@@ -39,6 +47,7 @@ namespace UnityEngine.VFX.VirtualImpacts
         VisualEffect visualEffect; 
         Impact[] instances;
         Queue<uint> available;
+        Bounds bounds = new Bounds();
 
         public class Impact
         {
@@ -74,7 +83,7 @@ namespace UnityEngine.VFX.VirtualImpacts
             public void SetMatrix4x4(int eventNameID, Matrix4x4 value) => EventAttribute?.SetMatrix4x4(eventNameID, value);
         }
 
-        public bool IsValid() => (Asset != null && MaxInstanceCount > 0);
+        public bool IsValid() => ((Asset != null || Prefab != null) && MaxInstanceCount > 0);
 
         private void OnValidate()
         {
@@ -86,9 +95,24 @@ namespace UnityEngine.VFX.VirtualImpacts
         {
             if (visualEffect == null)
             {
-                var gameObject = new GameObject($"{this.name} ({this.Asset.name})");
-                visualEffect = gameObject.AddComponent<VisualEffect>();
-                visualEffect.visualEffectAsset = Asset;
+                GameObject gameObject = null;
+
+                if (Prefab != null)
+                {
+                    gameObject = Instantiate(Prefab);
+                    visualEffect = gameObject.GetComponent<VisualEffect>(); 
+                    gameObject.transform.localPosition = Vector3.zero;
+                    gameObject.transform.localRotation = Quaternion.identity;
+                    gameObject.transform.localScale = Vector3.one;
+                }
+                else // If No prefab set, Create Game Object with component
+                {
+                    gameObject = new GameObject($"{this.name} ({this.Asset.name})");
+                    visualEffect = gameObject.AddComponent<VisualEffect>();
+                    visualEffect.visualEffectAsset = Asset;
+                }
+
+                gameObject.name = $"{this.name} ({visualEffect.visualEffectAsset.name})";
 
                 // Create Instances
                 instances = new Impact[MaxInstanceCount];
@@ -109,7 +133,7 @@ namespace UnityEngine.VFX.VirtualImpacts
         private void DisposeVirtualImpactGameObject()
         {
             // Dispose if not already disposed (i.e Game Shutdown)
-            if(visualEffect.gameObject != null)
+            if(visualEffect != null)
             {
                 Destroy(visualEffect.gameObject);
                 visualEffect = null;
@@ -168,8 +192,6 @@ namespace UnityEngine.VFX.VirtualImpacts
                 }
             }
         }
-
-        Bounds bounds = new Bounds();
 
         private void UpdateBounds()
         {
