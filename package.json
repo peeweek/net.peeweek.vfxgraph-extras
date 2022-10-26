@@ -22,5 +22,12 @@
   {
     "name" : "PeeWeeK.NET",
     "url" : "https://github.com/peeweek/"
-  }
+  },
+  "samples" : [
+   {
+     "displayName" : "VFX Virtual Impact Example",
+     "description" : "Test Implementation for VFX Virtual Impacts",
+     "path" : "Samples~/VirtualImpactTest"
+   }
+   ]
 }
