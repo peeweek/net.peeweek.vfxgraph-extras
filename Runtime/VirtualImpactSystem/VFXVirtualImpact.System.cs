@@ -6,9 +6,9 @@ namespace UnityEngine.VFX.VirtualImpacts
 {
     public partial class VFXVirtualImpact : ScriptableObject
     {
-        static GameObject systemsRoot = null;
+        public static GameObject systemsRoot { get; private set; } = null;
         static VFXVirtualImpactUpdater updater = null;
-        static List<VFXVirtualImpact> virtualImpacts;
+        public static List<VFXVirtualImpact> virtualImpacts { get; private set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Initialize()

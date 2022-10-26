@@ -43,11 +43,11 @@ namespace UnityEngine.VFX.VirtualImpacts
 
         public float BoundsPadding = 1.0f;
 
-        // Private
-        VisualEffect visualEffect; 
-        Impact[] instances;
-        Queue<uint> available;
-        Bounds bounds = new Bounds();
+        // Read only, private
+        public VisualEffect visualEffect { get; private set; } 
+        public Impact[] instances { get; private set; }
+        public Queue<uint> available { get; private set; }
+        public Bounds bounds { get; private set; } = new Bounds();
 
         public class Impact
         {
@@ -197,7 +197,7 @@ namespace UnityEngine.VFX.VirtualImpacts
         {
             if (visualEffect.HasVector3(_boundsPosition) && visualEffect.HasVector3(_boundsSize))
             {
-                bounds.size = Vector3.zero;
+                var bounds = new Bounds();
                 for (uint i = 0; i < instances.Length; i++)
                 {
                     var instance = instances[i];
@@ -216,6 +216,8 @@ namespace UnityEngine.VFX.VirtualImpacts
 
                 visualEffect.SetVector3(_boundsPosition, bounds.center);
                 visualEffect.SetVector3(_boundsSize, bounds.size);
+
+                this.bounds = bounds;
             }
         }
     }
