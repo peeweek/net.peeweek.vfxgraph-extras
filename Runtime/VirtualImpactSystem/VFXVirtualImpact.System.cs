@@ -8,7 +8,7 @@ namespace UnityEngine.VFX.VirtualImpacts
     {
         public static GameObject systemsRoot { get; private set; } = null;
         static VFXVirtualImpactUpdater updater = null;
-        public static List<VFXVirtualImpact> virtualImpacts { get; private set; }
+        public static List<VFXVirtualImpact> virtualImpacts { get; private set; } = new List<VFXVirtualImpact>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Initialize()
@@ -16,7 +16,6 @@ namespace UnityEngine.VFX.VirtualImpacts
             systemsRoot = new GameObject("VFXVirtualImpactSystem");
             GameObject.DontDestroyOnLoad(systemsRoot);
             updater = systemsRoot.AddComponent<VFXVirtualImpactUpdater>();
-            virtualImpacts = new List<VFXVirtualImpact>();
         }
 
         public static void CreateVirtualImpact(VFXVirtualImpact virtualImpact)
@@ -40,10 +39,10 @@ namespace UnityEngine.VFX.VirtualImpacts
             }
         }
 
-        public static bool TryGetImpact(VFXVirtualImpact virtualImpact, float lifeTime, out Impact instance)
+        public static bool TryGetImpact(VFXVirtualImpact virtualImpact, out Impact instance)
         {
             CreateVirtualImpact(virtualImpact);
-            return virtualImpact.TryGetImpact(lifeTime, out instance);
+            return virtualImpact.TryGetImpact(out instance);
         }
 
         public static void UpdateAll(float deltaTime)
@@ -65,7 +64,7 @@ namespace UnityEngine.VFX.VirtualImpacts
                 GUILayout.Space(16);
                 foreach (var s in virtualImpacts)
                 {
-                    GUILayout.Label($"> {s.name} ({s.Asset.name}) ({s.available.Count} available) {s.bounds}");
+                    GUILayout.Label($"> {s.name} ({s.Asset.name}) ({s.available.Count} available) {s.activeBounds}");
                     for (int i = 0; i<s.instances.Length; i++)
                     {
                         var instance = s.instances[i];
@@ -84,7 +83,7 @@ namespace UnityEngine.VFX.VirtualImpacts
         {
             foreach (var virtualImpact in virtualImpacts)
             {
-                Gizmos.DrawWireCube(virtualImpact.bounds.center, virtualImpact.bounds.size);
+                Gizmos.DrawWireCube(virtualImpact.activeBounds.center, virtualImpact.activeBounds.size);
             }
         }
     }

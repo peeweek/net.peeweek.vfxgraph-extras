@@ -44,7 +44,7 @@ namespace UnityEditor.VFX.DebugTools
                 if (handlesFor.ContainsKey(virtualImpact) && handlesFor[virtualImpact])
                 {
                     Handles.color = handleColors[virtualImpact];
-                    var b = virtualImpact.bounds;
+                    var b = virtualImpact.activeBounds;
                     Handles.DrawWireCube(b.center, b.size);
                 }
             }
@@ -89,7 +89,7 @@ namespace UnityEditor.VFX.DebugTools
                 if(f)
                 {
                     EditorGUI.indentLevel += 2;
-                    EditorGUILayout.BoundsField(Contents.Cache("Bounds"),virtualImpact.bounds);
+                    EditorGUILayout.BoundsField(Contents.Cache("Bounds"),virtualImpact.activeBounds);
                     EditorGUILayout.ObjectField(Contents.Cache("Impact"), virtualImpact, typeof(VFXVirtualImpact), false);
                     EditorGUILayout.ObjectField(Contents.Cache("VFXGraph Asset"), virtualImpact.Asset, typeof(VisualEffectAsset), false);
                     EditorGUILayout.ObjectField(Contents.Cache("Prefab Asset"), virtualImpact.Prefab, typeof(GameObject), false);
@@ -123,14 +123,14 @@ namespace UnityEditor.VFX.DebugTools
                     if(f)
                     {
                         EditorGUI.indentLevel ++;
-                        for (int i = 0; i < virtualImpact.instances.Length; i++)
+                        for (int i = 0; i < virtualImpact.activeImpacts.Count; i++)
                         {
-                            var impact = virtualImpact.instances[i];
+                            var impact = virtualImpact.activeImpacts[i];
 
                             if (impact.TTL < 0f)
                                 continue;
 
-                            EditorGUILayout.LabelField($"[#{i}] ({impact.TTL.ToString("F2")}s)");
+                            EditorGUILayout.LabelField($"[#{impact.index}] (TTL: {impact.TTL.ToString("F2")}s) - Bounds : {impact.Bounds}");
                         }
                         EditorGUI.indentLevel --;
                     }

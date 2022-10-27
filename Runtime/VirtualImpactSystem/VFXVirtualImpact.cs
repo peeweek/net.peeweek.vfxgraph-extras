@@ -44,22 +44,29 @@ namespace UnityEngine.VFX.VirtualImpacts
         public float BoundsPadding = 1.0f;
 
         // Read only, private
-        public VisualEffect visualEffect { get; private set; } 
-        public Impact[] instances { get; private set; }
-        public Queue<uint> available { get; private set; }
-        public Bounds bounds { get; private set; } = new Bounds();
+        public VisualEffect visualEffect { get; private set; }
+        public Queue<int> available { get; private set; }
+        public Bounds activeBounds { get; private set; } = new Bounds();
+        public List<Impact> activeImpacts { get; private set; }
+        
+        // Internal Private
+        Impact[] instances;
 
         public class Impact
         {
+            public int index { get; private set; }
             VFXVirtualImpact virtualImpact;
             public int startEventID;
             public int endEventID;
             public Bounds Bounds;
-            public float TTL;
+            public float TTL { get; private set; }
             public VFXEventAttribute EventAttribute;
 
-            public Impact(VFXVirtualImpact virtualImpact)
+            public bool isAlive => (TTL > 0f);
+
+            public Impact(VFXVirtualImpact virtualImpact, int index)
             {
+                this.index = index;
                 this.virtualImpact = virtualImpact;
                 this.startEventID = virtualImpact.DefaultStartEvent;
                 this.endEventID = virtualImpact.DefaultEndEvent;
@@ -68,9 +75,21 @@ namespace UnityEngine.VFX.VirtualImpacts
                 this.EventAttribute = virtualImpact.visualEffect.CreateVFXEventAttribute();
             }
 
-            public void Spawn()
+            public void Spawn(float lifeTime)
             {
-                virtualImpact.Spawn(this);
+                Debug.Assert(lifeTime > 0f);
+                Debug.Assert(!this.isAlive);
+
+                if (!isAlive)
+                {
+                    this.TTL = lifeTime;
+                    this.virtualImpact.Spawn(this);
+                }
+            }
+
+            public void Update(float deltaTime)
+            {
+                this.TTL -= deltaTime;
             }
 
             public void SetUint(int eventNameID, uint value) => EventAttribute?.SetUint(eventNameID, value);
@@ -116,11 +135,12 @@ namespace UnityEngine.VFX.VirtualImpacts
 
                 // Create Instances
                 instances = new Impact[MaxInstanceCount];
-                available = new Queue<uint>();
+                available = new Queue<int>();
+                activeImpacts = new List<Impact>();
 
-                for (uint i = 0; i < MaxInstanceCount; i++)
+                for (int i = 0; i < MaxInstanceCount; i++)
                 {
-                    instances[i] = new Impact(this);
+                    instances[i] = new Impact(this, i);
                     available.Enqueue(i);
                 }
                 UpdateBounds();
@@ -141,15 +161,12 @@ namespace UnityEngine.VFX.VirtualImpacts
             }
         }
 
-        private bool TryGetImpact(float lifeTime, out Impact impact)
+        private bool TryGetImpact(out Impact impact)
         {
-            Debug.Assert(lifeTime > 0f);
-
-            if(available.Count > 0 && lifeTime > 0f)
+            if(available.Count > 0 )
             {
-                uint index = available.Dequeue();
+                int index = available.Dequeue();
                 impact = instances[index];
-                impact.TTL = lifeTime;
                 return true;
             }
             else
@@ -161,36 +178,47 @@ namespace UnityEngine.VFX.VirtualImpacts
 
         private void Spawn(Impact impact)
         {
+            activeImpacts.Add(impact);
+
             if (ForwardLifetime)
-                impact.EventAttribute.SetFloat(LifetimeAttribute, impact.TTL);
+                impact.SetFloat(LifetimeAttribute, impact.TTL);
 
             if (ForwardBoundsCenter)
-                impact.EventAttribute.SetVector3(BoundsCenterAttribute, impact.Bounds.center);
+                impact.SetVector3(BoundsCenterAttribute, impact.Bounds.center);
 
             if (ForwardBoundsSize)
-                impact.EventAttribute.SetVector3(BoundsSizeAttribute, impact.Bounds.size);
+                impact.SetVector3(BoundsSizeAttribute, impact.Bounds.size);
 
             visualEffect.SendEvent(impact.startEventID, impact.EventAttribute);
+
             UpdateBounds();
         }
 
+        List<Impact> toRelease = new List<Impact>();
+
         private void UpdateVirtualImpact(float deltaTime)
         {
-            for(uint i = 0; i < instances.Length; i++)
-            {
-                var instance = instances[i];
-                if (instance.TTL < 0f)
-                    continue;
+            toRelease.Clear();
+            bool needBoundUpdate = false;
 
-                instance.TTL -= deltaTime;
-                if(instance.TTL < 0.0f)
+            foreach(var instance in activeImpacts)
+            {
+                instance.Update(deltaTime);
+
+                if (!instance.isAlive)
                 {
                     visualEffect.SendEvent(instance.endEventID, instance.EventAttribute);
-                    instance.TTL = -1f;
-                    available.Enqueue(i);
-                    UpdateBounds();
+                    available.Enqueue(instance.index);
+                    toRelease.Add(instance);
+                    needBoundUpdate = true;
                 }
             }
+
+            if(needBoundUpdate)
+                UpdateBounds();
+
+            foreach (var instanceToRelease in toRelease)
+                activeImpacts.Remove(instanceToRelease);
         }
 
         private void UpdateBounds()
@@ -198,17 +226,12 @@ namespace UnityEngine.VFX.VirtualImpacts
             if (visualEffect.HasVector3(_boundsPosition) && visualEffect.HasVector3(_boundsSize))
             {
                 var bounds = new Bounds();
-                for (uint i = 0; i < instances.Length; i++)
+                foreach(var instance in activeImpacts)
                 {
-                    var instance = instances[i];
-
-                    if (instance.TTL < 0f)
-                        continue;
-
                     if (bounds.size.sqrMagnitude == 0f)
                         bounds = instance.Bounds;
                     else
-                        bounds.Encapsulate(instances[i].Bounds);
+                        bounds.Encapsulate(instance.Bounds);
                 }
 
                 if(bounds.size.sqrMagnitude > 0f)
@@ -217,7 +240,7 @@ namespace UnityEngine.VFX.VirtualImpacts
                 visualEffect.SetVector3(_boundsPosition, bounds.center);
                 visualEffect.SetVector3(_boundsSize, bounds.size);
 
-                this.bounds = bounds;
+                this.activeBounds = bounds;
             }
         }
     }
