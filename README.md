@@ -1,6 +1,6 @@
 # Visual Effect Graph - Extras
 
-Raw bunch of feature prototypes for use with Visual Effect Graph. These features are mostly unpolished, non-official and unsupported by Unity. Use at your own risk.
+Additional Features for use with VFX Graph. These features are mostly unpolished, non-official and unsupported by Unity. Use at your own risk.
 
 ## Requirements
 
