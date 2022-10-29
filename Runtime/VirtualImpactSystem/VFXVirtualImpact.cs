@@ -32,7 +32,7 @@ namespace UnityEngine.VFX.VirtualImpacts
         public bool ForwardBoundsCenter = true;
         public ExposedProperty BoundsCenterAttribute = "position";
         public bool ForwardBoundsSize = true;
-        public ExposedProperty BoundsSizeAttribute = "size";
+        public ExposedProperty BoundsSizeAttribute = "scale";
 
         [Header("Bounds")]
         public ExposedProperty BoundsAABoxProperty = "Bounds";
