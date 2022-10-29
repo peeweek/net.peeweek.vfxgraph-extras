@@ -1,0 +1,5 @@
+{
+        "displayName" : "VFX Virtual Impact Example",
+        "description" : "Test Implementation for VFX Virtual Impacts",
+        "createSeparatePackage": false
+}
