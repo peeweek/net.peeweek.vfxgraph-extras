@@ -25,17 +25,6 @@ namespace UnityEngine.VFX.EventTesting
     }
 
     [Serializable]
-    public class EmptyBehavior : VFXEventSendUpdateBehavior
-    {
-
-        public override void OnStart(VFXEventTest test, VisualEffect vfx, float currentTime) { }
-
-        public override void OnStop(VFXEventTest test, VisualEffect vfx, float currentTime) { }
-
-        public override void Update(VFXEventTest test, VisualEffect vfx, float currentTime) { }
-    }
-
-    [Serializable]
     public class ConstantRateBehavior : VFXEventSendUpdateBehavior
     {
         [Min(0.0f)]

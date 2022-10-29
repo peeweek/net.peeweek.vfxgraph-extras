@@ -201,7 +201,7 @@ namespace UnityEditor.VFX.EventTesting
             b = rect;
             b.width = 28;
 
-            EditorGUI.BeginDisabledGroup(!tests[index].updateBehavior.canSendSingleEvent);
+            EditorGUI.BeginDisabledGroup(tests[index] == null || !tests[index].updateBehavior.canSendSingleEvent);
             if (GUI.Button(b, "▶"))
                 tests[index]?.PerformSingleEvent(visualEffect);
             EditorGUI.EndDisabledGroup();
@@ -233,7 +233,11 @@ namespace UnityEditor.VFX.EventTesting
 
         void OnTestAdd(ReorderableList l) 
         {
-            tests.Add(null); 
+            var instance = CreateInstance<VFXEventTest>();
+            instance.name = "New Event Test";
+            Undo.RegisterCreatedObjectUndo(instance, "Create new VFXEventTest Object");
+            Undo.RecordObject(sceneEventTestComponent, "Assign VFXEventTest to SceneEventTest Component");
+            tests.Add(instance); 
         }
         void OnTestRemove(ReorderableList l) 
         {
