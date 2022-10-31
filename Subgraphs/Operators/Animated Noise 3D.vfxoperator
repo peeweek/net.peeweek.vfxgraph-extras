@@ -214,7 +214,7 @@ MonoBehaviour:
   m_GraphVersion: 6
   m_ResourceVersion: 1
   m_SubgraphDependencies: []
-  m_CategoryPath: Subgraph Operator
+  m_CategoryPath: Noise
 --- !u!114 &3
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1782,7 +1782,7 @@ MonoBehaviour:
   - {fileID: 313}
   m_ExposedName: Custom Time
   m_Exposed: 1
-  m_Order: 3
+  m_Order: 4
   m_Category: 
   m_Min:
     m_Type:
@@ -1929,7 +1929,7 @@ MonoBehaviour:
   - {fileID: 373}
   m_ExposedName: Noise Type
   m_Exposed: 1
-  m_Order: 4
+  m_Order: 6
   m_Category: 
   m_Min:
     m_Type:
@@ -2081,7 +2081,7 @@ MonoBehaviour:
   - {fileID: 385}
   m_ExposedName: Frequency
   m_Exposed: 1
-  m_Order: 5
+  m_Order: 7
   m_Category: 
   m_Min:
     m_Type:
@@ -2167,7 +2167,7 @@ MonoBehaviour:
   - {fileID: 387}
   m_ExposedName: Octaves
   m_Exposed: 1
-  m_Order: 6
+  m_Order: 8
   m_Category: 
   m_Min:
     m_Type:
@@ -2255,7 +2255,7 @@ MonoBehaviour:
   - {fileID: 389}
   m_ExposedName: Roughness
   m_Exposed: 1
-  m_Order: 7
+  m_Order: 9
   m_Category: 
   m_Min:
     m_Type:
@@ -2343,7 +2343,7 @@ MonoBehaviour:
   - {fileID: 391}
   m_ExposedName: Lacunarity
   m_Exposed: 1
-  m_Order: 8
+  m_Order: 10
   m_Category: 
   m_Min:
     m_Type:
@@ -2429,7 +2429,7 @@ MonoBehaviour:
   - {fileID: 393}
   m_ExposedName: Range
   m_Exposed: 1
-  m_Order: 9
+  m_Order: 11
   m_Category: 
   m_Min:
     m_Type:
@@ -2583,7 +2583,7 @@ MonoBehaviour:
   - {fileID: 469}
   m_ExposedName: Direction
   m_Exposed: 1
-  m_Order: 2
+  m_Order: 3
   m_Category: 
   m_Min:
     m_Type:
@@ -5229,7 +5229,7 @@ MonoBehaviour:
   m_OutputSlots: []
   m_ExposedName: Value
   m_Exposed: 0
-  m_Order: 1
+  m_Order: 2
   m_Category: 
   m_Min:
     m_Type:
@@ -5411,7 +5411,7 @@ MonoBehaviour:
   m_OutputSlots: []
   m_ExposedName: Derivative
   m_Exposed: 0
-  m_Order: 3
+  m_Order: 5
   m_Category: 
   m_Min:
     m_Type:
