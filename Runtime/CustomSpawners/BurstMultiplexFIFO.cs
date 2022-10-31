@@ -9,12 +9,15 @@ namespace UnityEditor.VFX
     {
         public class InputProperties
         {
-            [Tooltip("A multiplier applied to the spawnCount when processing the queue")]
+            [Tooltip("A multiplier applied to the spawnCount attribute when processing the queue")]
             public float CountScale = 1.0f;
+            [Tooltip("Whether to multiply the spawn rate by the spawnCount attribute")]
+            public bool ProcessSpawnCount = false;
         }
 
         static readonly int spawnCount = Shader.PropertyToID("spawnCount");
         static readonly int countScale = Shader.PropertyToID("CountScale");
+        static readonly int processSpawnCount = Shader.PropertyToID("ProcessSpawnCount");
 
         Queue<VFXEventAttribute> attributeQueue = new Queue<VFXEventAttribute>();
         Queue<VFXEventAttribute> available = new Queue<VFXEventAttribute>();
@@ -44,7 +47,12 @@ namespace UnityEditor.VFX
                 var attribute = attributeQueue.Dequeue();
                 state.vfxEventAttribute.CopyValuesFrom(attribute);
                 available.Enqueue(attribute);
-                state.spawnCount = attribute.GetFloat(spawnCount) * vfxValues.GetFloat(countScale);
+
+                float count = 1f;
+                if (vfxValues.GetBool(processSpawnCount))
+                    count = attribute.GetFloat(spawnCount);
+
+                state.spawnCount = count * vfxValues.GetFloat(countScale);
             }
         }
     }

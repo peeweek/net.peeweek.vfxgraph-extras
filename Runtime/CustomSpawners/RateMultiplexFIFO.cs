@@ -11,6 +11,8 @@ namespace UnityEditor.VFX
         {
             [Tooltip("The per-instance Spawn rate")]
             public float SpawnRate = 1.0f;
+            [Tooltip("Whether to multiply the spawn rate by the spawnCount attribute")]
+            public bool ProcessSpawnCount = false;
             [Tooltip("Lifetime of each source")]
             public Vector2 SourceLifeTime = new Vector2(1f,3f);
         }
@@ -18,6 +20,7 @@ namespace UnityEditor.VFX
         static readonly int spawnCount = Shader.PropertyToID("spawnCount");
         static readonly int sourceLifetime = Shader.PropertyToID("SourceLifeTime");
         static readonly int spawnRate = Shader.PropertyToID("SpawnRate");
+        static readonly int processSpawnCount = Shader.PropertyToID("ProcessSpawnCount");
 
         List<(float, float, float, VFXEventAttribute)> attributeQueue;
         Queue<(float, float, float, VFXEventAttribute)> available;
@@ -31,9 +34,6 @@ namespace UnityEditor.VFX
 
             if (available == null)
                 available = new Queue<(float, float, float, VFXEventAttribute)>();
-
-            if (state.vfxEventAttribute.GetFloat(spawnCount) == 0f)
-                return;
 
             if (available.Count == 0)
                 available.Enqueue((0f,0f,0f,vfxComponent.CreateVFXEventAttribute()));
@@ -67,12 +67,15 @@ namespace UnityEditor.VFX
                 float dt = state.deltaTime * attributeQueue.Count;
                 tuple.Item1 += dt;
 
-                float val = tuple.Item2 + (vfxValues.GetFloat(spawnRate) * dt);
+                float count = 1f;
+                if (vfxValues.GetBool(processSpawnCount))
+                    count = tuple.Item4.GetFloat(spawnCount);
+
+                float val = tuple.Item2 + (count * vfxValues.GetFloat(spawnRate) * dt);
                 state.vfxEventAttribute.CopyValuesFrom(tuple.Item4);
 
                 tuple.Item2 = val % 1f;
                 state.spawnCount = val - tuple.Item2;
-
 
                 if (tuple.Item1 > tuple.Item3)
                 {
