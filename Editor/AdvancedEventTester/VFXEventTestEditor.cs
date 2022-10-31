@@ -138,6 +138,9 @@ namespace UnityEditor.VFX.EventTesting
 
             foreach (var type in s_BehaviorTypes)
             {
+                if (type.IsAbstract)
+                    continue;
+
                 string name = type.Name;
                 m_BehaviorMenu.AddItem(new GUIContent(ObjectNames.NicifyVariableName(name)), false, SetUpdateBehavior, type);
             }

@@ -6,7 +6,7 @@ VisualEffectResource:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: CurveOverLifetime
+  m_Name: Curve Over Lifetime
   m_Graph: {fileID: 114350483966674976}
   m_Infos:
     m_RendererSettings:
@@ -30,7 +30,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d4c867f6b72b714dbb5fd1780afe208, type: 3}
-  m_Name: 
+  m_Name: Curve Over Lifetime
   m_EditorClassIdentifier: 
   m_UIIgnoredErrors: []
   m_Parent: {fileID: 0}
@@ -44,8 +44,8 @@ MonoBehaviour:
   m_UISuperCollapsed: 0
   m_UIInfos: {fileID: 114350483966674977}
   m_ParameterInfo:
-  - name: curve
-    path: curve
+  - name: Curve
+    path: Curve
     tooltip: 
     sheetType: m_AnimationCurve
     realType: AnimationCurve
@@ -59,9 +59,10 @@ MonoBehaviour:
     enumValues: []
     descendantCount: 0
   m_ImportDependencies: []
-  m_GraphVersion: 8
+  m_GraphVersion: 6
   m_ResourceVersion: 1
-  m_SubgraphDependencies: []
+  m_SubgraphDependencies:
+  - {fileID: 5371698745253816930, guid: a737a56e62feed448a018b4f15572255, type: 3}
   m_CategoryPath: 
 --- !u!114 &114350483966674977
 MonoBehaviour:
@@ -80,10 +81,10 @@ MonoBehaviour:
   categories: []
   uiBounds:
     serializedVersion: 2
-    x: 0
-    y: 0
-    width: 0
-    height: 0
+    x: 385
+    y: 955
+    width: 958
+    height: 528
 --- !u!114 &114350483966674978
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -289,7 +290,7 @@ MonoBehaviour:
   m_InputSlots: []
   m_OutputSlots:
   - {fileID: 114350483966674985}
-  m_ExposedName: curve
+  m_ExposedName: Curve
   m_Exposed: 1
   m_Order: 0
   m_Category: 
@@ -369,7 +370,7 @@ MonoBehaviour:
   m_InputSlots:
   - {fileID: 114350483966674988}
   m_OutputSlots: []
-  m_ExposedName: s
+  m_ExposedName: Out
   m_Exposed: 0
   m_Order: 1
   m_Category: 
