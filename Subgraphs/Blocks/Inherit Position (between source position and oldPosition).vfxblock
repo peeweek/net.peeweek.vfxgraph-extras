@@ -46,7 +46,7 @@ MonoBehaviour:
   m_UIInfos: {fileID: 114350483966674977}
   m_ParameterInfo: []
   m_ImportDependencies: []
-  m_GraphVersion: 6
+  m_GraphVersion: 9
   m_ResourceVersion: 1
   m_SubgraphDependencies: []
   m_CategoryPath: 
@@ -67,10 +67,10 @@ MonoBehaviour:
   categories: []
   uiBounds:
     serializedVersion: 2
-    x: 1675
-    y: 989
-    width: 1087
-    height: 380
+    x: 1647
+    y: 983
+    width: 1115
+    height: 392
 --- !u!114 &114350483966674978
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -111,7 +111,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_UIIgnoredErrors: []
-  m_Parent: {fileID: 0}
+  m_Parent: {fileID: 114350483966674976}
   m_Children: []
   m_UIPosition: {x: 0, y: 0}
   m_UICollapsed: 1
@@ -123,6 +123,8 @@ MonoBehaviour:
   capacity: 128
   stripCapacity: 1
   particlePerStripCount: 128
+  needsComputeBounds: 0
+  boundsMode: 1
   m_Space: 0
 --- !u!114 &114350483966674980
 MonoBehaviour:
@@ -814,9 +816,9 @@ MonoBehaviour:
   m_UIIgnoredErrors: []
   m_Parent: {fileID: 114350483966674976}
   m_Children: []
-  m_UIPosition: {x: 1687, y: 1118}
+  m_UIPosition: {x: 1664, y: 983}
   m_UICollapsed: 0
-  m_UISuperCollapsed: 1
+  m_UISuperCollapsed: 0
   m_InputSlots: []
   m_OutputSlots:
   - {fileID: 114350483966675001}
@@ -975,9 +977,9 @@ MonoBehaviour:
   m_UIIgnoredErrors: []
   m_Parent: {fileID: 114350483966674976}
   m_Children: []
-  m_UIPosition: {x: 1675, y: 1161}
+  m_UIPosition: {x: 1647, y: 1095}
   m_UICollapsed: 0
-  m_UISuperCollapsed: 1
+  m_UISuperCollapsed: 0
   m_InputSlots: []
   m_OutputSlots:
   - {fileID: 114350483966675006}
@@ -1136,7 +1138,7 @@ MonoBehaviour:
   m_UIIgnoredErrors: []
   m_Parent: {fileID: 114350483966674976}
   m_Children: []
-  m_UIPosition: {x: 1703, y: 1201}
+  m_UIPosition: {x: 1731, y: 1207}
   m_UICollapsed: 0
   m_UISuperCollapsed: 0
   m_InputSlots:
