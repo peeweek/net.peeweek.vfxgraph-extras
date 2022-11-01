@@ -5,7 +5,7 @@ namespace UnityEngine.VFX.DebugTools
 {
     public static class VFXDebug
     {
-        public struct DebugEntry
+        public class DebugEntry
         {
             public static DebugEntry Create(VisualEffect vfx)
             {
