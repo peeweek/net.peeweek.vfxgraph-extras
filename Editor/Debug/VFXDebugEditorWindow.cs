@@ -137,9 +137,7 @@ namespace UnityEngine.VFX.DebugTools
 
         private void OnGUI()
         {
-            Profiler.BeginSample("VFXDebugWindow.Reload");
-            Reload();
-            Profiler.EndSample();
+            VFXDebug.UpdateAll(ref entries, false);
 
             float ms = 16.6f;
 
