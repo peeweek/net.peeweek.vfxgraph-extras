@@ -1,11 +1,11 @@
 {
   "name": "net.peeweek.vfxgraph-extras",
   "displayName": "Visual Effect Graph (Extras)",
-  "version": "2021.3.2",
-  "unity": "2021.3",
+  "version": "2022.2.0",
+  "unity": "2022.2",
   "dependencies": {
-    "com.unity.visualeffectgraph": "12.1.0",
-    "com.unity.shadergraph": "12.1.0"
+    "com.unity.visualeffectgraph": "14.0.0",
+    "com.unity.shadergraph": "14.0.0"
   },  
   "description": "Visual Effect Graph Extras - Extensions and Additions to VFX Graph, not endorsed nor supported by Unity.",
     "keywords": [

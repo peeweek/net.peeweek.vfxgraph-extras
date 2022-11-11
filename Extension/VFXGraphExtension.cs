@@ -20,10 +20,14 @@ static partial class VFXGraphExtension
 
     static void Update()
     {
-        if (VFXViewWindow.currentWindow == null)
-            return;
+        foreach(var vfxViewWindow in VFXViewWindow.GetAllWindows())
+        {
+            UpdateOrCreateExtensionForWindow(vfxViewWindow);
+        }
+    }
 
-        VFXViewWindow window = VFXViewWindow.currentWindow;
+    static void UpdateOrCreateExtensionForWindow(VFXViewWindow window)
+    { 
         VisualElement extension = window.graphView.Q("extension");
 
         if (extension == null)
@@ -31,18 +35,18 @@ static partial class VFXGraphExtension
             var content = window.graphView.Q("contentViewContainer");
             var root = content.parent;
             window.graphView.RegisterCallback<KeyDownEvent>(OnKeyDown);
-            extension = new VFXExtensionBoard();
+            extension = new VFXExtensionBoard(window);
             extension.name = "extension";
             root.Add(extension);
         }
 
         Profiler.BeginSample("VFXGraphExtension.UpdateStatsUI");
-        UpdateStatsUIElements();
+        UpdateStatsUIElements(window);
         Profiler.EndSample();
         if(window.graphView != null && window.graphView.controller != null && window.graphView.controller.model.asset != null)
         {
             Profiler.BeginSample("VFXGraphExtension.UpdateDebugInfo");
-            UpdateDebugInfo();
+            UpdateDebugInfo(window);
             Profiler.EndSample();
         }
 
@@ -54,32 +58,38 @@ static partial class VFXGraphExtension
 
     static void OnKeyDown(KeyDownEvent e)
     {
-        if(e.keyCode == KeyCode.T)
+        var wnd = VFXViewWindow.focusedWindow as VFXViewWindow;
+
+        if (wnd != null && e.keyCode == KeyCode.T)
         {
-            var wnd = VFXViewWindow.currentWindow;
             Vector2 pos = e.originalMousePosition;
             pos = wnd.graphView.ChangeCoordinatesTo(wnd.graphView.contentViewContainer, pos);
-            OpenAddCreateWindow(pos);
+            OpenAddCreateWindow(pos, wnd);
         }
     }
 
-    static void OpenAddCreateWindowScreenCenter()
+    static void OpenAddCreateWindowScreenCenter(object window)
     {
-        var wnd = VFXViewWindow.currentWindow;
+        var wnd = window as VFXViewWindow;
+
+        if (wnd == null)
+            return;
+
         Vector2 pos = wnd.graphView.ScreenToViewPosition(wnd.position.center);
         pos = wnd.graphView.ChangeCoordinatesTo(wnd.graphView.contentViewContainer, pos);
-        OpenAddCreateWindow(pos);
+        OpenAddCreateWindow(pos, wnd);
     }
 
-    static void OpenAddCreateWindow(Vector2 pos)
+    static void OpenAddCreateWindow(Vector2 pos, VFXViewWindow window)
     {
-        VFXGraphGalleryWindow.OpenWindowAddTemplate(pos);
+        VFXGraphGalleryWindow.OpenWindowAddTemplate(pos, window);
     }
 
 
-    static void CreateGameObjectAndAttach()
+    static void CreateGameObjectAndAttach(object window)
     {
-        var resource = VFXViewWindow.currentWindow.graphView.controller.model.visualEffectObject.GetResource();
+        var wnd = window as VFXViewWindow;
+        var resource = wnd.graphView.controller.model.visualEffectObject.GetResource();
         if (resource == null)
             return;
         var asset = resource.asset;
@@ -89,7 +99,7 @@ static partial class VFXGraphExtension
         var vfx = go.AddComponent<VisualEffect>();
         vfx.visualEffectAsset = asset;
         Selection.activeGameObject = go;
-        VFXViewWindow.currentWindow.LoadAsset(asset, vfx);
+        wnd.LoadAsset(asset, vfx);
     }
 
     static class Styles
@@ -102,8 +112,10 @@ static partial class VFXGraphExtension
 
     class VFXExtensionBoard : GraphElement
     {
-        public VFXExtensionBoard() : base()
+        VFXViewWindow window;
+        public VFXExtensionBoard(VFXViewWindow window) : base()
         {
+            this.window = window;
             style.width = 148;
             style.height = 24;
             
@@ -132,7 +144,7 @@ static partial class VFXGraphExtension
         void OnClick()
         {
             GenericMenu m = new GenericMenu();
-            if(VFXViewWindow.currentWindow.graphView.controller == null) // No Asset
+            if(this.window.graphView.controller == null) // No Asset
             {
                 // WIP : No Asset Menu
                 m.AddItem(new GUIContent("No Asset"), false, null);
@@ -140,11 +152,13 @@ static partial class VFXGraphExtension
             }
             else
             {
-                m.AddItem(new GUIContent("Add System from Template... (T)"), false, OpenAddCreateWindowScreenCenter);
+                m.AddDisabledItem(this.window.titleContent, false);
                 m.AddSeparator("");
-                m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach);
-                m.AddItem(new GUIContent("Show Debug Stats"), debugInfoVisible, ToggleSpawnerStats);
-                m.AddItem(new GUIContent("Navigator #N"), navigatorVisibility[VFXViewWindow.currentWindow], ToggleNavigatorMenu, VFXViewWindow.currentWindow);
+                m.AddItem(new GUIContent("Add System from Template... (T)"), false, OpenAddCreateWindowScreenCenter, this.window);
+                m.AddSeparator("");
+                m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach, this.window);
+                m.AddItem(new GUIContent("Show Debug Stats"), GetDebugInfoVisible(window.displayedResource.asset), ToggleSpawnerStats, this.window);
+                m.AddItem(new GUIContent("Navigator #N"), navigatorVisibility[this.window], ToggleNavigatorMenu, this.window);
                 m.ShowAsContext();
             }
         }

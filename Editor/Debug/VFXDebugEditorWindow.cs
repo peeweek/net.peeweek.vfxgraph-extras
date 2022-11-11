@@ -414,10 +414,7 @@ namespace UnityEngine.VFX.DebugTools
                         r.xMin = r.xMax; r.width = 40;
                         if (GUI.Button(r, "Edit", Styles.toolbarButton))
                         {
-                            if (VFXViewWindow.currentWindow == null)
-                                GetWindow<VFXViewWindow>();
-
-                            VFXViewWindow.currentWindow.LoadAsset(entry.asset, entry.component);
+                            VFXViewWindow.GetWindow(entry.asset, true);
                         }
                     }
                 }

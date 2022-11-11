@@ -67,7 +67,7 @@ public partial class VFXGraphExtension //.Navigator
     {
         if (!navigators.ContainsKey(window))
         {
-            navigators.Add(window, new VFXNavigator(VFXViewWindow.currentWindow, NavigatorLoadPosition()));
+            navigators.Add(window, new VFXNavigator(window, NavigatorLoadPosition()));
             navigatorVisibility.Add(window, GetNavigatorVisible(window));
         }
     }
@@ -100,7 +100,7 @@ public partial class VFXGraphExtension //.Navigator
     {
         CreateNavigatorIfRequired(window);
 
-        var gv = VFXViewWindow.currentWindow.graphView;
+        var gv = window.graphView;
         var navigator = navigators[window];
         if (visible)
         {
