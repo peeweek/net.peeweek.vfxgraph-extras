@@ -7,8 +7,8 @@ Additional Features for use with VFX Graph. These features are mostly unpolished
 * VFX Graph Package
 * Unity
   * 2020.3 > Use Tags before `2021.3.0`
-  * 2021.3 > Working
-  * 2022.X > (Work In progress)
+  * 2021.3 > Use Tags before `2022.2.0`
+  * 2022.2 > Use versions `2022.2.0` and onward
 
 ## Documentation
 
