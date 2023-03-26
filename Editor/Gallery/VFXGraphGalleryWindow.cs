@@ -20,6 +20,8 @@ namespace UnityEditor.VFX
         bool debug = false;
         Vector2 addPosition;
 
+        double m_lastClickTime;
+
         internal static void OpenWindowCreateAsset(string outPath)
         {
             var window = GetWindow<VFXGraphGalleryWindow>(true, "Create New VFX Asset", true);
@@ -116,6 +118,7 @@ namespace UnityEditor.VFX
             EditorGUI.DrawRect(new Rect(0, 80, 800, 1), Color.black);
 
             int width = 512;
+            bool doubleClick = false;
 
             using (new GUILayout.HorizontalScope(GUILayout.ExpandHeight(true)))
             {
@@ -155,9 +158,21 @@ namespace UnityEditor.VFX
                                 r = new RectOffset(4,4,4,20).Add(r);
                                 if(Event.current.type == EventType.MouseDown && r.Contains(Event.current.mousePosition))
                                 {
-                                    selected = t;
-                                    selectedCategory = !string.IsNullOrEmpty(category.categoryName)? category.categoryName : category.name;
-                                    selectedSource = selected.templateAsset;
+                                    double clickTime = EditorApplication.timeSinceStartup;
+                                    if((clickTime - m_lastClickTime) < 0.2 && t.templateAsset == selectedSource)
+                                    {
+                                        doubleClick = true;
+                                    }
+                                    else
+                                    {
+                                        selected = t;
+                                        selectedCategory = !string.IsNullOrEmpty(category.categoryName) ? category.categoryName : category.name;
+                                        selectedSource = selected.templateAsset;
+
+                                        m_lastClickTime = clickTime;
+
+                                    }
+
                                 }
                             }
 
@@ -216,7 +231,7 @@ namespace UnityEditor.VFX
 
                     EditorGUI.BeginDisabledGroup(selectedSource == null);
 
-                    if (GUILayout.Button("Create", GUILayout.Width(80), GUILayout.Height(22)) || pressedReturn )
+                    if (doubleClick || GUILayout.Button("Create", GUILayout.Width(80), GUILayout.Height(22)) || pressedReturn )
                     {
                         string sourceAssetPath = AssetDatabase.GetAssetPath(selectedSource);
                         AssetDatabase.CopyAsset(sourceAssetPath, outPath);
@@ -249,7 +264,7 @@ namespace UnityEditor.VFX
                     GUILayout.FlexibleSpace();
                     EditorGUI.BeginDisabledGroup(selectedSource == null);
 
-                    if (GUILayout.Button("Add System", GUILayout.Width(100), GUILayout.Height(22)) || pressedReturn)
+                    if (doubleClick || GUILayout.Button("Add System", GUILayout.Width(100), GUILayout.Height(22)) || pressedReturn)
                     {
                         vfxInvokingWindow.graphView.CreateTemplateSystem(AssetDatabase.GetAssetPath(selectedSource), addPosition, null);
                         vfxInvokingWindow = null;
