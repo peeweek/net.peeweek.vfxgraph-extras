@@ -348,6 +348,9 @@ namespace UnityEditor.VFX.UI
                 if (orphans.hasChildren)
                     m_Root.AddChild(orphans);
 
+                if (!m_Root.hasChildren)
+                    m_Root.AddChild(new TreeViewItem(index++, 1, "(Visual Effect Graph is empty)"));
+
                 return m_Root;
             }
 
