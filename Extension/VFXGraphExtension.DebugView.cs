@@ -115,9 +115,12 @@ static partial class VFXGraphExtension //.DebugView
             currentVisualEffectAsset[window] = currentAsset;
         }
 
-        gv.Query<VFXContextUI>().Build().ForEach((context) =>
+        // We use a GraphView Query here as it can be made during compilation
+        // However at this stage we can't enumerate VFXContextUI from GetAllContexts() (yet)
+
+        window.graphView.Query<VFXContextUI>().Build().ForEach((context) =>
         {
-            if (context.ClassListContains("spawner"))
+            if (context.IsModel<VFXBasicSpawner>())
             {
                 string name = context.Q<Label>("user-label").text;
 
