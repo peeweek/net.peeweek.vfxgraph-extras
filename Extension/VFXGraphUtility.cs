@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.VFX.UI;
 using UnityEngine;
+using UnityEngine.UIElements;
 using UnityEngine.VFX;
 
 namespace UnityEditor.VFX
@@ -23,7 +24,7 @@ namespace UnityEditor.VFX
         {
             foreach(var window in VFXViewWindow.GetAllWindows())
             {
-                var asset = GetLoadedAsset(window);
+                var asset = window.GetLoadedAsset();
                 if(asset != null)
                     yield return asset;
             }
@@ -71,7 +72,12 @@ namespace UnityEditor.VFX
             }
         }
 
-        internal static VisualEffectAsset GetLoadedAsset(VFXViewWindow window)
+        internal static bool HasLoadedAsset(this VFXViewWindow window)
+        {
+            return window.graphView.controller != null;
+        }
+
+        internal static VisualEffectAsset GetLoadedAsset(this VFXViewWindow window)
         {
             try
             {
@@ -83,21 +89,56 @@ namespace UnityEditor.VFX
             }
         }
 
+        #region UI UTILITIES
+
+        internal static string GetContextUserName(this VFXContextUI contextUI)
+        {
+            return (contextUI.Q("user-label") as Label)?.text;
+        }
+
+        internal static string GetContextName(this VFXContextUI contextUI)
+        {
+            return contextUI.GetModel().name;
+        }
+
+        #endregion
+
+
         #region UI to MODEL
 
-        internal static VFXContext GetContext(VFXContextUI contextUI)
+        internal static T GetModelAs<T>(this VFXContextUI contextUI) where T : VFXContext
+        {
+            return contextUI.GetModel() as T;
+        }
+
+        internal static VFXContext GetModel(this VFXContextUI contextUI)
         {
             return contextUI.controller.model;
         }
 
-        internal static VFXBlock GetBlock(VFXBlockUI blockUI)
+        internal static T GetModelAs<T>(this VFXBlockUI blockUI) where T : VFXBlock
+        {
+            return blockUI.GetModel() as T;
+        }
+
+        internal static VFXBlock GetModel(this VFXBlockUI blockUI)
         {
             return blockUI.controller.model;
         }
 
-        internal static VFXOperator GetOperator(VFXOperatorUI operatorUI)
+        internal static T GetModelAs<T>(this VFXOperatorUI operatorUI) where T : VFXOperator
+        {
+            return operatorUI.GetModel() as T;
+        }
+
+        internal static VFXOperator GetModel(this VFXOperatorUI operatorUI)
         {
             return operatorUI.controller.model;
+        }
+
+        internal static bool IsModel<T>(this VFXContextUI contextUI)
+        {
+            return contextUI.controller.model is T;
         }
         #endregion
 
@@ -109,19 +150,19 @@ namespace UnityEditor.VFX
             return context.GetData().GetAttributes().Count() == 0;
         }
 
-        internal static string GetSpawnSystemName(VFXBasicSpawner context)
+        internal static bool HasData<T>(VFXContext context)
+        {
+            return !IsOrphanContext(context) && context.GetData() is T;
+        }
+
+        internal static string GetSpawnSystemName(this VFXBasicSpawner context)
         {
             return context.GetParent().systemNames.GetUniqueSystemName(context.GetData());
         }
 
-        internal static string GetParticleSystemName(VFXContext context)
+        internal static string GetParticleSystemName(this VFXContext context)
         {
             return context.GetParent().systemNames.GetUniqueSystemName(context.GetData());
-        }
-
-        internal static IEnumerable<VFXBlock> GetAllBlocks(VFXContext context)
-        {
-            return context.children;
         }
 
         #endregion
@@ -154,9 +195,6 @@ namespace UnityEditor.VFX
 
             }
         }
-
-
-
     }
 }
 

@@ -5,10 +5,7 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEditor.VFX;
 using UnityEngine.VFX;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine.Profiling;
-using System.Text;
 
 static partial class VFXGraphExtension
 {

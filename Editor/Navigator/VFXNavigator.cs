@@ -68,7 +68,7 @@ namespace UnityEditor.VFX.UI
 
         void OnGUI()
         {
-            if(window.graphView.controller == null) // No Asset
+            if(!window.HasLoadedAsset()) // No Asset
             {
                 EditorGUILayout.HelpBox("Please Load an asset first", MessageType.Info);
                 return;
@@ -77,7 +77,7 @@ namespace UnityEditor.VFX.UI
             if (needReloadNavigator || m_TreeView == null)
                 ReloadNavigator();
 
-            if (window.graphView.controller != null && m_Graph != window.graphView.controller.graph)
+            if (m_Graph != window.graphView.controller.graph) // Asset Changed ?
             {
                 m_Graph = window.graphView.controller.graph;
                 m_Graph.onInvalidateDelegate += M_Graph_onInvalidateDelegate;
@@ -146,34 +146,34 @@ namespace UnityEditor.VFX.UI
                 var allNodes = m_VFXView.GetAllNodes();
                 var allContextsUI = m_VFXView.GetAllContexts();
 
-                string GetContextLabel(VFXContextUI context)
+                string GetContextLabel(VFXContextUI contextUI)
                 {
-                    string label = (context.Q("user-label") as Label)?.text;
+                    string label = contextUI.GetContextUserName();
                     if (string.IsNullOrEmpty(label))
-                        return context.name;
+                        return contextUI.name;
                     else
-                        return $"{label} ({context.controller.model.name})";
+                        return $"{label} ({contextUI.GetContextName()})";
                 }
 
                 // Find Events
                 List<VFXContextUI> events = new List<VFXContextUI>();
                 foreach (var context in allContextsUI)
                 {
-                    if (context.controller.model is VFXBasicEvent)
+                    if (context.IsModel<VFXBasicEvent>())
                         events.Add(context);
                 }
-                events.Sort((n, m) => string.Compare((n.controller.model as VFXBasicEvent).eventName, (m.controller.model as VFXBasicEvent).eventName));
+                events.Sort((n, m) => string.Compare((n.GetModel() as VFXBasicEvent).eventName, (m.GetModel() as VFXBasicEvent).eventName));
                 foreach (var e in events)
                 {
-                    eventRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, e, Styles.contextEventTypeIcon, (e.controller.model as VFXBasicEvent).eventName));
+                    eventRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, e, Styles.contextEventTypeIcon, (e.GetModel() as VFXBasicEvent).eventName));
                 }
 
                 // Find Spawn Contexts/Blocks
-                foreach(var context in allContextsUI.Where(c => c.controller.model is VFXBasicSpawner))
+                foreach(var contextUI in allContextsUI.Where(c => c.IsModel<VFXBasicSpawner>()))
                 {
-                    var contextItem = new VFXNavigatorTreeViewItem(index++, 1, context, Styles.contextSpawnTypeIcon, VFXGraphUtility.GetSpawnSystemName(context.controller.model as VFXBasicSpawner));
+                    var contextItem = new VFXNavigatorTreeViewItem(index++, 1, contextUI, Styles.contextSpawnTypeIcon, VFXGraphUtility.GetSpawnSystemName(contextUI.GetModelAs<VFXBasicSpawner>()));
 
-                    var blocks = context.GetAllBlocks();
+                    var blocks = contextUI.GetAllBlocks();
                     foreach(var block in blocks)
                     {
                         contextItem.AddChild(new VFXNavigatorTreeViewItem(index++, 2, block, Styles.blockTypeIcon));
@@ -183,7 +183,7 @@ namespace UnityEditor.VFX.UI
                 }
 
                 // Find Other Contexts
-                foreach (var context in allContextsUI.Where(c => c.controller.model is VFXStaticMeshOutput))
+                foreach (var context in allContextsUI.Where(c => c.GetModelAs<VFXStaticMeshOutput>()))
                 {
                     string label = GetContextLabel(context);
                     var contextItem = new VFXNavigatorTreeViewItem(index++, 1, context, Styles.contextOutputTypeIcon, label);
@@ -195,11 +195,12 @@ namespace UnityEditor.VFX.UI
                 Dictionary<string, Dictionary<VFXContextUI, List<VFXBlockUI>>> systemsContextsBlocks = new Dictionary<string, Dictionary<VFXContextUI, List<VFXBlockUI>>>();
                 foreach(var contextUI in allContextsUI) // Create All Systems
                 {
-                    var context = VFXGraphUtility.GetContext(contextUI);
-                    var data = context.GetData();
-                    if (data != null && data is VFXDataParticle)
+                    var context = contextUI.GetModel();
+
+                    if(VFXGraphUtility.HasData<VFXDataParticle>(context))
                     {
-                        string systemName = VFXGraphUtility.GetParticleSystemName(contextUI.controller.model);
+                        string systemName = VFXGraphUtility.GetParticleSystemName(contextUI.GetModel());
+
                         if(!systemsContextsBlocks.ContainsKey(systemName))
                         {
                             systemsContextsBlocks.Add(systemName, new Dictionary<VFXContextUI, List<VFXBlockUI>>());
@@ -208,7 +209,7 @@ namespace UnityEditor.VFX.UI
                 }
                 foreach (var contextUI in allContextsUI) // Create All Contexts/Blocks
                 {
-                    var context = VFXGraphUtility.GetContext(contextUI);
+                    var context = contextUI.GetModel();
                     var inputType = context.inputType;
                     var outputType = context.outputType;
 
@@ -229,19 +230,22 @@ namespace UnityEditor.VFX.UI
                             }
                             orphans.AddChild(orphan);
                         }
-
-                        string systemName = VFXGraphUtility.GetParticleSystemName(contextUI.controller.model);
-                        systemsContextsBlocks[systemName].Add(contextUI, new List<VFXBlockUI>());
-                        foreach(var block in contextUI.GetAllBlocks())
+                        else // Non-orphans
                         {
-                            systemsContextsBlocks[systemName][contextUI].Add(block);
+                            string systemName = contextUI.GetModel().GetParticleSystemName();
+                            systemsContextsBlocks[systemName].Add(contextUI, new List<VFXBlockUI>());
+
+                            foreach (var block in contextUI.GetAllBlocks())
+                            {
+                                systemsContextsBlocks[systemName][contextUI].Add(block);
+                            }
                         }
                     }
                 }
 
-                int GetContextPriority(VFXContextUI context)
+                int GetContextPriority(VFXContextUI contextUI)
                 {
-                    switch (context.controller.model.taskType)
+                    switch (contextUI.GetModel().taskType)
                     {
                         default: 
                             return 0;
@@ -273,11 +277,12 @@ namespace UnityEditor.VFX.UI
                     var systemItem = new VFXNavigatorTreeViewItem(index++, 1, null, Styles.systemParticleTypeIcon, systemName);
                     foreach(var context in contexts.Keys.OrderBy(o => GetContextPriority(o)))
                     {
+                        VFXTaskType taskType = context.GetModel().taskType;
 
                         var icon = Styles.contextOutputTypeIcon;
-                        if (context.controller.model.taskType == VFXTaskType.Initialize)
+                        if (taskType == VFXTaskType.Initialize)
                             icon = Styles.contextInitializeTypeIcon;
-                        else if (context.controller.model.taskType == VFXTaskType.Update)
+                        else if (taskType == VFXTaskType.Update)
                             icon = Styles.contextUpdateTypeIcon;
 
                         var contextItem = new VFXNavigatorTreeViewItem(index++, 2, context, icon, GetContextLabel(context));
@@ -308,16 +313,15 @@ namespace UnityEditor.VFX.UI
                     }
                 }
                 operators.Sort((n,m) => string.Compare(n.title, m.title));
-                foreach(var n in operators)
+                foreach(var op in operators)
                 {
-                    var op = VFXGraphUtility.GetOperator(n as VFXOperatorUI);
-                    operatorsRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, n, Styles.operatorTypeIcon));
+                    operatorsRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, op, Styles.operatorTypeIcon));
                 }
 
                 properties.Sort((n, m) => string.Compare(n.title, m.title));
-                foreach (var p in properties)
+                foreach (var prop in properties)
                 {
-                    propertiesRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, p, Styles.operatorTypeIcon));
+                    propertiesRoot.AddChild(new VFXNavigatorTreeViewItem(index++, 1, prop, Styles.operatorTypeIcon));
                 }
 
 
