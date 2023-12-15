@@ -14,7 +14,11 @@ namespace UnityEditor.VFX.Block
             OverDistance
         }
 
+#if UNITY_2023_2_OR_NEWER
+        [SerializeField, VFXSetting(VFXSettingAttribute.VisibleFlags.Default), Tooltip("True to allow one event max per frame")]
+#else
         [SerializeField, VFXSetting(VFXSettingAttribute.VisibleFlags.All), Tooltip("True to allow one event max per frame")]
+#endif
         protected bool clampToOne = true;
 
         public override string name { get { return string.Format("Trigger On Particle Move"); } }

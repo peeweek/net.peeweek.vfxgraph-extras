@@ -13,7 +13,11 @@ namespace UnityEditor.VFX.Block
             Relative
         }
 
+#if UNITY_2023_2_OR_NEWER
+        [SerializeField, VFXSetting(VFXSettingAttribute.VisibleFlags.Default), Tooltip("Whether to check absolute age, or relative (age/lifetime)")]
+#else
         [SerializeField, VFXSetting(VFXSettingAttribute.VisibleFlags.All), Tooltip("Whether to check absolute age, or relative (age/lifetime)")]
+#endif
         protected Mode ageMode = Mode.Absolute;
 
         public override string name { get { return string.Format("Trigger On Particle Age"); } }
