@@ -10,7 +10,6 @@ namespace UnityEngine.VFX.VirtualImpacts
         static VFXVirtualImpactUpdater updater = null;
         public static List<VFXVirtualImpact> virtualImpacts { get; private set; } = new List<VFXVirtualImpact>();
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Initialize()
         {
             systemsRoot = new GameObject("VFXVirtualImpactSystem");
@@ -20,6 +19,8 @@ namespace UnityEngine.VFX.VirtualImpacts
 
         public static void CreateVirtualImpact(VFXVirtualImpact virtualImpact)
         {
+            if(updater == null) Initialize();
+
             Debug.Assert(virtualImpact.IsValid());
 
             if (virtualImpact.IsValid() && !virtualImpacts.Contains(virtualImpact))
@@ -32,6 +33,8 @@ namespace UnityEngine.VFX.VirtualImpacts
 
         public static void DisposeVirtualImpact(VFXVirtualImpact virtualImpact)
         {
+            if (updater == null) Initialize();
+
             if (virtualImpacts.Contains(virtualImpact))
             {
                 virtualImpact.DisposeVirtualImpactGameObject();
