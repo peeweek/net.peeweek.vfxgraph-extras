@@ -1,8 +1,8 @@
 {
   "name": "net.peeweek.vfxgraph-extras",
   "displayName": "Visual Effect Graph (Extras)",
-  "version": "2022.2.2",
-  "unity": "2022.2",
+  "version": "2022.3.0",
+  "unity": "2022.3",
   "dependencies": {
     "com.unity.visualeffectgraph": "14.0.0",
     "com.unity.shadergraph": "14.0.0"
