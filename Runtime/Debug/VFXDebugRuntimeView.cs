@@ -11,6 +11,9 @@ namespace UnityEngine.VFX.DebugTools
         public event VFXDebugDelegate onDebugVisibilityChange;
         public delegate void VFXDebugDelegate(bool visible);
 
+        [Tooltip("Padding (Left, Top, Right, Bottom)")]
+        public Vector4 Padding = new Vector4(32, 32, 32, 32);
+
         [SerializeField]
         GUISkin guiSkin;
 
@@ -83,13 +86,17 @@ namespace UnityEngine.VFX.DebugTools
         List<VFXDebug.DebugEntry> entries;
         Vector2 scroll;
 
+        static readonly Color kBoxColor = new Color(.5f, .5f, .5f, 3f);
+
         private void OnGUI()
         {
             if (!visible)
                 return;
 
-            Rect r = new Rect(32, 32, Mathf.Min(Camera.main.pixelWidth,1280) - 64, Camera.main.pixelHeight - 64);
+            Rect r = new Rect(Padding.x, Padding.y, Camera.main.pixelWidth - (Padding.x + Padding.z), Camera.main.pixelHeight - (Padding.y + Padding.w));
+            GUI.color = kBoxColor;
             GUI.Box(r, "", guiSkin.box);
+            GUI.color = Color.white;
             r = new RectOffset(12, 12, 12, 12).Remove(r);
             using (new GUILayout.AreaScope(r))
             {
