@@ -31,7 +31,7 @@ namespace UnityEditor.VFX
 
         internal static void OpenWindowAddTemplate(Vector2 addPosition, VFXViewWindow vfxWindow)
         {
-            var window = GetWindow<VFXGraphGalleryWindow>(true, $"Create New System from Template", true);
+            var window = GetWindow<VFXGraphGalleryWindow>(true, $"Create New System from User Template", true);
             window.mode = WindowMode.AddNode;
             window.addPosition = addPosition;
             vfxInvokingWindow = vfxWindow;
@@ -105,13 +105,13 @@ namespace UnityEditor.VFX
                 using (new GUILayout.VerticalScope())
                 {
                     if(mode == WindowMode.AddNode)
-                        GUILayout.Label(Contents.Cache("Let's Add a new System to our Graph"), Styles.bigLabel);
+                        GUILayout.Label(Contents.Cache("Pick a User Template System to add it to the graph"), Styles.bigLabel);
                     else if (mode == WindowMode.CreateAsset)
-                        GUILayout.Label(Contents.Cache("Let's Select a template as Starting Point"), Styles.bigLabel);
+                        GUILayout.Label(Contents.Cache("Pick a User Template System  as Starting Point"), Styles.bigLabel);
                     else
                         GUILayout.Label(Contents.Cache("## NOT IMPLEMENTED ##"), Styles.bigLabel);
 
-                    GUILayout.Label(Contents.Cache("Pick a template from the gallery"), EditorStyles.label);
+                    GUILayout.Label(Contents.Cache("Select a template from the gallery"), EditorStyles.label);
                 }
                 GUILayout.FlexibleSpace();
             }
