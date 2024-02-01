@@ -84,8 +84,8 @@ static partial class VFXGraphExtension //.DebugView
         if (window == null)
             return;
 
-        var gv = window.graphView;
-        if (gv == null || gv.controller == null || gv.controller.model == null)
+        
+        if (!window.HasLoadedAsset())
             return;
 
         if (spawnerDebugInfos == null)
@@ -98,7 +98,7 @@ static partial class VFXGraphExtension //.DebugView
             currentVisualEffectAsset = new Dictionary<VFXViewWindow, VisualEffectAsset>();
 
         // Check if asset changed
-        VisualEffectAsset currentAsset = window.graphView.controller.model.asset;
+        VisualEffectAsset currentAsset = window.GetLoadedAsset();
 
         // If window was not registered, register it
         if(!currentVisualEffectAsset.ContainsKey(window))
@@ -115,9 +115,12 @@ static partial class VFXGraphExtension //.DebugView
             currentVisualEffectAsset[window] = currentAsset;
         }
 
-        gv.Query<VFXContextUI>().Build().ForEach((context) =>
+        // We use a GraphView Query here as it can be made during compilation
+        // However at this stage we can't enumerate VFXContextUI from GetAllContexts() (yet)
+
+        window.graphView.Query<VFXContextUI>().Build().ForEach((context) =>
         {
-            if (context.ClassListContains("spawner"))
+            if (context.IsModel<VFXBasicSpawner>())
             {
                 string name = context.Q<Label>("user-label").text;
 
@@ -257,7 +260,7 @@ static partial class VFXGraphExtension //.DebugView
                 if (systemDebugInfos[window].Any(o => o.ui == context))
                     return;
 
-                var model = context.controller.model;
+                var model = context.GetModel();
                 SystemDebugInfo info = new SystemDebugInfo();
 
                 var panel = context.Q("System-Debug");
