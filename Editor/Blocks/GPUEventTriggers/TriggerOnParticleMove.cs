@@ -29,7 +29,7 @@ namespace UnityEditor.VFX.Block
         {
             get
             {
-                yield return new VFXAttributeInfo(new VFXAttribute(GetRateCountAttribute(), VFXValueType.Float), VFXAttributeMode.ReadWrite);
+                yield return new VFXAttributeInfo(new VFXAttribute(GetRateCountAttribute(), VFXValueType.Float, string.Empty), VFXAttributeMode.ReadWrite);
                 yield return new VFXAttributeInfo(VFXAttribute.EventCount, VFXAttributeMode.Write);
 
                 yield return new VFXAttributeInfo(VFXAttribute.Position, VFXAttributeMode.Read);
