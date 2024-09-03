@@ -4,7 +4,7 @@ using UnityEngine.VFX;
 
 namespace UnityEditor.VFX
 {
-    [CreateAssetMenu(fileName ="New VFX Template.asset", menuName = "Visual Effects/Visual Effect Graph Template", order = 310)]
+    [CreateAssetMenu(fileName = "New VFX User Template.asset", menuName = "Visual Effects/Visual Effect Graph User Template", order = 355)]
     public class VFXGraphGalleryTemplate : ScriptableObject
     {
         public string categoryName;
@@ -27,7 +27,7 @@ namespace UnityEditor.VFX
             set => EditorPrefs.SetString("VFXGraphGalleryTemplate.dir", value);
         }
 
-            [ContextMenu("Capture From Scene View (286x180)")]
+        [ContextMenu("Capture From Scene View (286x180)")]
         void CaptureFromSceneView()
         {
             int width = 286;
@@ -60,6 +60,27 @@ namespace UnityEditor.VFX
                 ProjectWindowUtil.ShowCreatedAsset(exported);
             }
             RenderTexture.active = null;
+        }
+
+        private void OnValidate()
+        {
+            AddToLibrary();
+        }
+
+        public void AddToLibrary()
+        {
+
+        }
+
+        [InitializeOnLoadMethod]
+        static void PopulateAll()
+        {
+            var assetGUIDs = AssetDatabase.FindAssets($"t:{nameof(VFXGraphGalleryTemplate)}");
+            foreach ( var guid in assetGUIDs )
+            {
+                VFXGraphGalleryTemplate asset = AssetDatabase.LoadAssetAtPath<VFXGraphGalleryTemplate>(AssetDatabase.GUIDToAssetPath(guid));
+                asset.AddToLibrary();
+            }
         }
 
     }

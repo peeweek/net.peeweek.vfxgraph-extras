@@ -5,7 +5,7 @@ using UnityEngine.VFX.Utility;
 
 namespace UnityEngine.VFX.VirtualImpacts
 {
-    [CreateAssetMenu(fileName = "New VFXVirtualImpact", menuName = "Visual Effects/VFX Virtual Impact")]
+    [CreateAssetMenu(fileName = "New VFXVirtualImpact", menuName = "Visual Effects/VFX Virtual Impact", order = 375)]
     public partial class VFXVirtualImpact : ScriptableObject
     {
         [Tooltip("Visual Effect Asset to use for Virtual Instance")]

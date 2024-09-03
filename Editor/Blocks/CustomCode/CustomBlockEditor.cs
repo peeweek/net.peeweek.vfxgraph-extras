@@ -108,8 +108,10 @@ namespace UnityEditor.VFX.Block
 
             nameRect.width = split - 40;
             string name = sp.FindPropertyRelative("name").stringValue;
-            int attribvalue = EditorGUI.Popup(nameRect, Array.IndexOf(VFXAttribute.All, name), VFXAttribute.All);
-            sp.FindPropertyRelative("name").stringValue = VFXAttribute.All[attribvalue];
+            var attributes = VFXAttributesManager.LocalOnlyAttributes.ToArray();
+            var names = attributes.Select(x => x.name).ToArray();
+            int attribvalue = EditorGUI.Popup(nameRect, Array.IndexOf(attributes, name), names);
+            sp.FindPropertyRelative("name").stringValue = attributes[attribvalue].name;
 
             var modeRect = rect;
             modeRect.xMin = split;

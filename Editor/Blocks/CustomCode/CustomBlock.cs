@@ -6,7 +6,7 @@ using UnityEngine.VFX;
 
 namespace UnityEditor.VFX.Block
 {
-    [VFXInfo(category = "Custom")]
+    //[VFXInfo(category = "Custom")]
     class CustomBlock : VFXBlock
     {
 
@@ -34,7 +34,7 @@ namespace UnityEditor.VFX.Block
         }
         
         [Delayed]
-        public string BlockName = "Custom Block";
+        public string BlockName = "Custom Block (Extras - DEPRECATED)";
 
         public VFXContextType ContextType = VFXContextType.InitAndUpdateAndOutput;
         public VFXDataType CompatibleData = VFXDataType.Particle;
@@ -64,10 +64,10 @@ namespace UnityEditor.VFX.Block
             get
             {
                 foreach (var info in Attributes)
-                    yield return new VFXAttributeInfo(VFXAttribute.Find(info.name), info.mode);
+                    yield return new VFXAttributeInfo(VFXAttributesManager.FindBuiltInOnly(info.name), info.mode);
 
                 foreach (var c in CustomAttributes) {
-                    VFXAttribute attr = new VFXAttribute(c.name, CustomAttributeUtility.GetValueType(c.type));
+                    VFXAttribute attr = new VFXAttribute(c.name, CustomAttributeUtility.GetValueType(c.type), string.Empty);
                     yield return new VFXAttributeInfo(attr, c.mode);
                 }
 
