@@ -24,6 +24,11 @@ namespace UnityEditor.VFX.Globals
             }
         }
 
+
+        // Compatibility API : We do not use HasShaderFile() so it's not expected that we use this API
+        // Following API is for compatibility Only, should break anytime if refactors are incoming
+        // Use with caution !
+
         public ShaderInclude shaderFile => throw new System.NotImplementedException();
 
         public string sourceCode { get => string.Empty; set => throw new System.NotImplementedException(); }
