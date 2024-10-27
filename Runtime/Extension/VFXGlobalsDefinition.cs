@@ -4,7 +4,7 @@ using UnityEngine.VFX.Utility;
 
 namespace UnityEngine.VFX.Globals
 {
-    [CreateAssetMenu(fileName = "VFX Globals", menuName = "Visual Effects/VFX Globals Definition")]
+    [CreateAssetMenu(fileName = "VFX Globals", menuName = "Visual Effects/VFX Globals Definition", order = 376)]
     public class VFXGlobalsDefinition : ScriptableObject
     {
         public TextAsset hlslInclude;

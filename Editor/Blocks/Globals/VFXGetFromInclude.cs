@@ -3,13 +3,13 @@ using UnityEngine.VFX.Globals;
 
 namespace UnityEditor.VFX.Globals
 {
-    [VFXInfo(category ="Globals")]
+    [VFXInfo(category = "Globals", name= "Get VFX Globals", synonyms = new string[] { "Global", "Includes", "Gameplay" } )]
     class VFXGetFromInclude : VFXOperator
     {
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InGraph)]
         public VFXGlobalsDefinition definition;
 
-        public override string name => $"Get Globals {(definition == null? "":"("+(ObjectNames.NicifyVariableName(definition.name))+")")}";
+        public override string name => $"Get VFX Globals {(definition == null? "":"("+(ObjectNames.NicifyVariableName(definition.name))+")")}";
 
         protected override IEnumerable<VFXPropertyWithValue> outputProperties
         {
