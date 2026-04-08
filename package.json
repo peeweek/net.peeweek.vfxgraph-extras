@@ -1,11 +1,11 @@
 {
   "name": "net.peeweek.vfxgraph-extras",
   "displayName": "Visual Effect Graph (Extras)",
-  "version": "6000.0.0",
-  "unity": "6000.0",
+  "version": "6000.3.0",
+  "unity": "6000.3",
   "dependencies": {
-    "com.unity.visualeffectgraph": "17.0.0",
-    "com.unity.shadergraph": "17.0.0"
+    "com.unity.visualeffectgraph": "17.3.0",
+    "com.unity.shadergraph": "17.3.0"
   },
   "description": "Visual Effect Graph Extras - Extensions and Additions to VFX Graph, not endorsed nor supported by Unity.",
   "keywords": [
@@ -28,6 +28,5 @@
       "description": "Test Implementation for VFX Virtual Impacts",
       "path": "Samples~/VirtualImpactTest"
     }
-  ],
-  "unityRelease": "0"
+  ]
 }

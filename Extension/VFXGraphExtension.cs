@@ -60,31 +60,16 @@ static partial class VFXGraphExtension
     {
         var wnd = VFXViewWindow.focusedWindow as VFXViewWindow;
 
-        if (wnd != null && e.keyCode == KeyCode.T)
+        if (wnd != null && e.keyCode == KeyCode.F12)
         {
-            Vector2 pos = e.originalMousePosition;
-            pos = wnd.graphView.ChangeCoordinatesTo(wnd.graphView.contentViewContainer, pos);
-            OpenAddCreateWindow(pos, wnd);
+            ToggleNavigatorMenu(wnd);
         }
+        if (wnd != null && e.keyCode == KeyCode.F11)
+        {
+            ToggleSpawnerStats(wnd);
+        }
+
     }
-
-    static void OpenAddCreateWindowScreenCenter(object window)
-    {
-        var wnd = window as VFXViewWindow;
-
-        if (wnd == null)
-            return;
-
-        Vector2 pos = wnd.graphView.ScreenToViewPosition(wnd.position.center);
-        pos = wnd.graphView.ChangeCoordinatesTo(wnd.graphView.contentViewContainer, pos);
-        OpenAddCreateWindow(pos, wnd);
-    }
-
-    static void OpenAddCreateWindow(Vector2 pos, VFXViewWindow window)
-    {
-        VFXGraphGalleryWindow.OpenWindowAddTemplate(pos, window);
-    }
-
 
     static void CreateGameObjectAndAttach(object window)
     {
@@ -154,11 +139,9 @@ static partial class VFXGraphExtension
             {
                 m.AddDisabledItem(this.window.titleContent, false);
                 m.AddSeparator("");
-                m.AddItem(new GUIContent("Add System from User Template... (T)"), false, OpenAddCreateWindowScreenCenter, this.window);
-                m.AddSeparator("");
                 m.AddItem(new GUIContent("Create Game Object and Attach"), false, CreateGameObjectAndAttach, this.window);
-                m.AddItem(new GUIContent("Show Debug Stats"), GetDebugInfoVisible(window.displayedResource.asset), ToggleSpawnerStats, this.window);
-                m.AddItem(new GUIContent("Navigator #N"), navigatorVisibility[this.window], ToggleNavigatorMenu, this.window);
+                m.AddItem(new GUIContent("Toggle Spawner Debug (F11)"), GetDebugInfoVisible(window.displayedResource.asset), ToggleSpawnerStats, this.window);
+                m.AddItem(new GUIContent("Navigator (F12)"), navigatorVisibility[this.window], ToggleNavigatorMenu, this.window);
                 m.ShowAsContext();
             }
         }
